@@ -1,0 +1,27 @@
+{
+    "name": "everest/app",
+    "description": "Everest - Application Component",
+    "license": "MIT",
+    "version": "1.0.0",
+    "authors": [
+        {
+            "name": "Philipp Steingrebe",
+            "email": "philipp@steingrebe.de"
+        }
+    ],
+    "autoload": {
+        "psr-0" : {
+            "Everest\\App\\" : "src/"
+        }
+    },
+    "require": {
+        "php" : "^7.1",
+        "everest/container": "^1",
+        "everest/http": "^1"
+    },
+
+    "suggest": {
+        "twig/twig": "Template engine that can be used using the Everest\\App\\Provider\\TwigProvider",
+        "monolog/monolog": "Logger that can be used using the Everest\\App\\Provider\\MonologProvider"
+    }
+}
