@@ -1,17 +1,10 @@
 <?php
 
 
-use Everest\Http\Tests\WebTestCase;
-
 /**
  * @author  Philipp Steingrebe <philipp@steingrebe.de>
  */
-class ContainerTest extends WebTestCase {
-
-	public function setUp()
-	{
-		$this->setupWebRequest();
-	}
+class ContainerTest extends \PHPUnit_Framework_TestCase {
 
 	public function testContainerExtension()
 	{
