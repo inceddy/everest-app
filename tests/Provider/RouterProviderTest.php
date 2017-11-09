@@ -1,10 +1,11 @@
 <?php
 
 
-use Everest\Http\Provider\RouterProvider;
+use Everest\App\Provider\RouterProvider;
 use Everest\Http\Responses\Response;
+use Everest\Http\Requests\RequestInterface;
 use Everest\Http\Requests\ServerRequest;
-use Everest\Http\Tests\WebTestCase;
+use Everest\Http\Requests\Request;
 use Everest\Http\Uri;
 
 use Everest\Container\Container;
@@ -12,12 +13,7 @@ use Everest\Container\Container;
 /**
  * @author  Philipp Steingrebe <philipp@steingrebe.de>
  */
-class RouterProviderTest extends WebTestCase {
-
-	public function setUp()
-	{
-		$this->setupWebRequest();
-	}
+class RouterProviderTest extends \PHPUnit_Framework_TestCase {
 
 	public function getContainer()
 	{
@@ -45,20 +41,25 @@ class RouterProviderTest extends WebTestCase {
 	public function testRoutingAcceptsDependencies()
 	{
 		$container = $this->getContainer();
+		$called = false;
 
-		$container->config(['RouterProvider', function($router) {
-			$test = $this;
-			$router->get('prefix/{id}', ['Request', 'RouteParameter', 'TestValue', function($request, $parameter, $testValue) use ($test) {
-				$this->assertTrue(is_object($request));
-				$test->assertEquals(['id' => 'test'], $parameter);
-				$this->assertEquals('test-value', $testValue);
+		$container->config(['RouterProvider', function($router) use (&$called) {
+			$router->get('prefix/{id}', ['Request', 'RouteParameter', 'TestValue', 
+				function($request, $parameter, $testValue) use (&$called) {
+					$called = true;
 
-				return 'Not Empty Result';
-			}]);
+					$this->assertInstanceOf(RequestInterface::CLASS, $request);
+					$this->assertEquals(['id' => 'test'], $parameter);
+					$this->assertEquals('test-value', $testValue);
+					return 'Not Empty Result';
+				}
+			]);
 		}]);
 
 
+
 		$container['Router']->handle($container->Request);
+		$this->assertTrue($called);
 	}
 
 	public function testDefaultHandlerAcceptsDependencies()
@@ -66,10 +67,8 @@ class RouterProviderTest extends WebTestCase {
 		$container = $this->getContainer();
 
 		$container->config(['RouterProvider', function($router) {
-			$test = $this;
-			$router->otherwise(['Request', 'Error', 'TestValue', function($request, $error, $testValue){
-				$this->assertTrue(is_object($request));
-				$this->assertNull($error);
+			$router->otherwise(['Request', 'TestValue', function($request, $testValue){
+				$this->assertInstanceOf(RequestInterface::CLASS, $request);
 				$this->assertEquals('test-value', $testValue);
 
 				return 'not-empty-result';

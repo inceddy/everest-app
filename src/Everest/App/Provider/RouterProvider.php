@@ -14,6 +14,7 @@ use Everest\Http\Router;
 use Everest\Http\Route;
 use Everest\Http\Requests\Request;
 use Everest\Http\Responses\Response;
+use Everest\Http\Responses\ResponseInterface;
 use Everest\Container\Injector;
 use Everest\Container\Container;
 use LogicException;
@@ -123,10 +124,10 @@ class RouterProvider extends Router {
 	
 	public function otherwise($handler)
 	{
-		return parent::otherwise(function($request, $error) use ($handler) {
+		return parent::otherwise(function($request) use ($handler) {
 			return $this->injector->invoke(
 				Container::getDependencyArray($handler), 
-				['Request' => $request, 'Error' => $error]
+				['Request' => $request]
 			);
 		});
 	}
@@ -139,7 +140,7 @@ class RouterProvider extends Router {
 	 * {@inheritDoc}
 	 */
 	
-	public function handle(Request $request) : Response
+	public function handle(Request $request) : ResponseInterface
 	{
 		if (!$this->constructed) {
 			throw new LogicException('You cant call handle in config state.');
