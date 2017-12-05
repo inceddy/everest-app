@@ -83,10 +83,8 @@ class OptionsProvider implements FactoryProviderInterface, DelegateProviderInter
 	public function getDelegates() : array
 	{
 		return [
-			'options' => function(string $namespace, $options) {
-				$this->add(Options::from([
-					$namespace => $options
-				]));
+			'options' => function($options) {
+				$this->add(Options::from($options));
 			}
 		];
 	}
