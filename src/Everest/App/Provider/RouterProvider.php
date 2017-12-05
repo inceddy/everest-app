@@ -17,15 +17,16 @@ use Everest\Http\Responses\Response;
 use Everest\Http\Responses\ResponseInterface;
 use Everest\Container\Injector;
 use Everest\Container\Container;
+use Everest\Container\FactoryProviderInterface;
+use Everest\App\DelegatesProviderInterface;
 use LogicException;
-
 
 /**
  * The provider class for router object in an ieu\Container
  */
 
 
-class RouterProvider extends Router {
+class RouterProvider extends Router implements FactoryProviderInterface, DelegatesProviderInterface {
 
 	/**
 	 * The Router factory
@@ -50,19 +51,27 @@ class RouterProvider extends Router {
 	private $constructed = false;
 
 	/**
-	 * Constructor
-	 * Invokes the new router provider
-	 * and sets the factory callable.
-	 *
-	 * @return self 
-	 * 
+	 * {@inheritDoc}
 	 */
 	
-	public function __construct()
+	public function getFactory()
 	{
-		parent::__construct();
-		$this->factory = ['Injector', [$this, 'factory']];
+		return ['Injector', [$this, 'factory']];
 	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	
+	public function getDelegates() : array
+	{
+		return [
+			'get'       => [$this, 'get'],
+			'post'      => [$this, 'post'],
+			'any'       => [$this, 'any'],
+			'otherwise' => [$this, 'otherwise']
+		];
+	}	
 
 
 	/**

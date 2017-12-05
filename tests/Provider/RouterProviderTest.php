@@ -95,4 +95,15 @@ class RouterProviderTest extends \PHPUnit_Framework_TestCase {
 
 		$response = $container['Router'];
 	}
+
+	public function testDelegates()
+	{
+		$app = new Everest\App\App;
+
+		var_dump($app);
+
+		$app->get('/', function(){
+			return 'not-empty-result';
+		});
+	}
 }
