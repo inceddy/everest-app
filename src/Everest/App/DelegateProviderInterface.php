@@ -11,7 +11,7 @@
 
 namespace Everest\App;
 
-interface DelegatesProviderInterface
+interface DelegateProviderInterface
 {
 	/**
 	 * Returns an array of delegates

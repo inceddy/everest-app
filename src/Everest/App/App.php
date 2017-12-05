@@ -16,6 +16,7 @@ use Everest\Http\Requests\RequestInterface;
 use Everest\Http\Responses\Response;
 use Everest\App\Provider\OptionsProvider;
 use Everest\App\Provider\RouterProvider;
+use Everest\App\Provider\SessionProvider;
 use Everest\Container\Container;
 use Everest\Container\FactoryProviderInterface;
 
@@ -42,32 +43,41 @@ class App extends Container {
 
 		// Define default error handler
 		$this->factory('ErrorHandler', ['Logger', function($logger){
-			return function(Exception $error) use ($logger) {
+			return function(\Throwable $error) use ($logger) {
 				if ($logger) {
 					$logger->error(sprintf(
 						'Unhandled exception occured: %s', 
 						$error->getMessage()
 					));
 				}
-				return new Response(500, 'Internal server error.');
+				return new Response('Internal server error.', 500);
 			};
 		}]);
 
-		// Insert root options
+		// Define options provider
 		$this->provider('Options', new OptionsProvider(Options::from([
 			'app_env'     => 'test',
 			'app_version' => 'alpha'
 		])));
 
+		// Define session provider
+		$this->provider('Session', new SessionProvider);
+
 		// Define router provider
 		$this->provider('Router', new RouterProvider);
 	}
 
+	/**
+	 * Overload provider method to catch providers with delegates.
+	 * 
+	 * {@inheritDoc}
+	 */
+	
 	public function provider(string $name, FactoryProviderInterface $provider)
 	{
 		parent::provider($name, $provider);
 
-		if ($provider instanceof DelegatesProviderInterface) {
+		if ($provider instanceof DelegateProviderInterface) {
 			$this->delegates = array_merge($this->delegates, $provider->getDelegates());
 		}
 
@@ -91,28 +101,6 @@ class App extends Container {
 	{
 		return $this->service($name . 'Controller', $dependenciesAndClassname);
 	}
-
-
-	/**
-	 * Merges new options into this app
-	 *
-	 * @param mixed $options
-	 *    The new options object to merge
-	 *    
-	 * @return self
-	 */
-	
-	public function options($options)
-	{
-		$options = Options::from($options);
-		
-		$this->config(['OptionsProvider', function($optionsProvider) use ($options) {
-			$optionsProvider->add($options);
-		}]);
-
-		return $this;
-	}
-
 
 	/**
 	 * Handle provider delegates
@@ -150,7 +138,7 @@ class App extends Container {
 	 * @return self
 	 */
 	
-	public function run(RequestInterface $request, bool $catch = true)
+	public function run(RequestInterface $request = null, bool $catch = true)
 	{
 		$this->constant('Request', $request ?: ServerRequest::fromGlobals());
 		$this->boot();
@@ -158,7 +146,7 @@ class App extends Container {
 		try {		
 			$response = $this->Router->handle($this->Request);
 		}
-		catch (\Exception $error) {
+		catch (\Throwable $error) {
 			if (!$catch) {
 				throw $error;
 			}
