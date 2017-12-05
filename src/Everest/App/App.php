@@ -17,11 +17,17 @@ use Everest\Http\Responses\Response;
 use Everest\App\Provider\OptionsProvider;
 use Everest\App\Provider\RouterProvider;
 use Everest\Container\Container;
+use Everest\Container\FactoryProviderInterface;
 
 use InvalidArgumentException;
 
 class App extends Container {
 
+	/**
+	 * Deletegated provider methods
+	 * @var array
+	 */
+	
 	private $delegates;
 
 	public function __construct(...$arguments)
@@ -32,7 +38,8 @@ class App extends Container {
 		$this->delegates = [];
 
 		// Define logger
-		$this->Logger = null;
+		$this->value('Logger', null);
+
 		// Define default error handler
 		$this->factory('ErrorHandler', ['Logger', function($logger){
 			return function(Exception $error) use ($logger) {
@@ -56,12 +63,12 @@ class App extends Container {
 		$this->provider('Router', new RouterProvider);
 	}
 
-	public function provider(string $name, $provider)
+	public function provider(string $name, FactoryProviderInterface $provider)
 	{
 		parent::provider($name, $provider);
 
-		if (property_exists($provider, 'delegates')) {
-			$this->delegates = array_merge($this->delegates, $provider->delegates);
+		if ($provider instanceof DelegatesProviderInterface) {
+			$this->delegates = array_merge($this->delegates, $provider->getDelegates());
 		}
 
 		return $this;
@@ -121,7 +128,9 @@ class App extends Container {
 	public function __call($name, $arguments)
 	{
 		if ($this->state !== self::STATE_INITIAL) {
-			throw new \RuntimeException('Delegates can only be called during inital state.');
+			throw new \RuntimeException(
+				'Delegates can only be called while container is in inital state.'
+			);
 		}
 
 		if (isset($this->delegates[$name])) {
@@ -137,7 +146,7 @@ class App extends Container {
 
 
 	/**
-	 * Boots the container and handles the current request
+	 * Boots the container and handles the given or global request
 	 * @return self
 	 */
 	
