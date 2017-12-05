@@ -18,7 +18,7 @@ use Everest\Http\Responses\ResponseInterface;
 use Everest\Container\Injector;
 use Everest\Container\Container;
 use Everest\Container\FactoryProviderInterface;
-use Everest\App\DelegatesProviderInterface;
+use Everest\App\DelegateProviderInterface;
 use LogicException;
 
 /**
@@ -26,7 +26,7 @@ use LogicException;
  */
 
 
-class RouterProvider extends Router implements FactoryProviderInterface, DelegatesProviderInterface {
+class RouterProvider extends Router implements FactoryProviderInterface, DelegateProviderInterface {
 
 	/**
 	 * The Router factory
