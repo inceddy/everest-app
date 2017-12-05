@@ -10,11 +10,11 @@
  */
 
 namespace Everest\App\Provider;
+use Everest\Container\FactoryProviderInterface;
+use Everest\App\DelegatesProviderInterface;
 use Everest\App\Options;
 
-class OptionsProvider {
-
-	public $factory;
+class OptionsProvider implements FactoryProviderInterface, DelegatesProviderInterface {
 
 	private $options;
 
@@ -24,7 +24,6 @@ class OptionsProvider {
 	{
 		$this->options = [];
 		$this->initialOptions = $initialOptions ?: new Options;
-		$this->factory = [$this, 'factory'];
 	}
 
 	public function add(Options $options)
@@ -32,10 +31,27 @@ class OptionsProvider {
 		$this->options[] = $options;
 	}
 
-	public function factory()
+	/**
+	 * {@inheritDoc}
+	 */
+	
+	public function getFactory()
 	{
-		return array_reduce($this->options, function($carry, $options) {
-			return $carry->merge($options);
-		}, $this->initialOptions);
+		return [function(){
+			return array_reduce($this->options, function($carry, $options) {
+				return $carry->merge($options);
+			}, $this->initialOptions);
+		}];
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	
+	public function getDelegates() : array
+	{
+		return [
+			'options' => [$this, 'add']
+		];
 	}
 }
