@@ -1,15 +1,15 @@
 <?php
 
 /*
- * This file is part of ieUtilities HTTP.
+ * This file is part of Everest.
  *
- * (c) 2016 Philipp Steingrebe <development@steingrebe.de>
+ * (c) 2017 Philipp Steingrebe <development@steingrebe.de>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
 
-namespace Everest\Http\Collections;
+namespace Everest\App;
 
 interface SessionInterface
 {
