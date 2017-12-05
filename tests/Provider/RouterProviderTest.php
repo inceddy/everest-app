@@ -98,9 +98,16 @@ class RouterProviderTest extends \PHPUnit_Framework_TestCase {
 
 	public function testDelegates()
 	{
+		$λ = function(){};
+
 		$app = new Everest\App\App;
-		$app->get('/', function(){
-			return 'not-empty-result';
-		});
+		$app->context('some-context', $λ);
+		$app->request('/', ServerRequest::HTTP_POST | ServerRequest::HTTP_DELETE, $λ);
+		$app->get('/', $λ);
+		$app->post('/', $λ);
+		$app->put('/', $λ);
+		$app->delete('/', $λ);
+		$app->any('/', $λ);
+		$app->otherwise($λ);
 	}
 }

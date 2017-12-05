@@ -66,8 +66,12 @@ class RouterProvider extends Router implements FactoryProviderInterface, Delegat
 	public function getDelegates() : array
 	{
 		return [
+			'context'   => [$this, 'context'],
+			'request'   => [$this, 'request'],
 			'get'       => [$this, 'get'],
 			'post'      => [$this, 'post'],
+			'put'       => [$this, 'put'],
+			'delete'    => [$this, 'delete'],
 			'any'       => [$this, 'any'],
 			'otherwise' => [$this, 'otherwise']
 		];
