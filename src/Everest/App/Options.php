@@ -22,7 +22,7 @@ class Options {
 		}
 
 		if (is_string($options) && is_readable($options)) {
-			$type = (($pos = strrpos($options, '.')) !== -1) ? strtolower(substr($options, $pos + 1)) : null;
+			$type = (($pos = strrpos($options, '.')) !== false) ? strtolower(substr($options, $pos + 1)) : null;
 
 			switch ($type) {
 				case 'php':
@@ -80,14 +80,15 @@ class Options {
 		$merged = $optionsOld;
 
 		foreach ($optionsNew as $name => $value) {
-      if (is_array($value) && isset($merged[$name]) && is_array($merged[$name])) {
-            $merged[$name] = self::mergeRecursive($merged[$name], $value);
-      } else if (is_numeric($name)) {
-        if (!in_array($value, $merged))
-          $merged[] = $value;
-      } else {
-        $merged[$name] = $value;
-      }
+			if (is_array($value) && isset($merged[$name]) && is_array($merged[$name])) {
+				$merged[$name] = self::mergeRecursive($merged[$name], $value);
+			} else if (is_numeric($name)) {
+				if (!in_array($value, $merged)) {
+					$merged[] = $value;
+				}
+			} else {
+				$merged[$name] = $value;
+			}
 		}
 
 		return $merged;
