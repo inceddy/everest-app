@@ -67,13 +67,17 @@ class RouterProvider extends Router implements FactoryProviderInterface, Delegat
 	{
 		return [
 			'context'   => [$this, 'context'],
+			// Routing
 			'request'   => [$this, 'request'],
 			'get'       => [$this, 'get'],
 			'post'      => [$this, 'post'],
 			'put'       => [$this, 'put'],
 			'delete'    => [$this, 'delete'],
 			'any'       => [$this, 'any'],
-			'otherwise' => [$this, 'otherwise']
+			'otherwise' => [$this, 'otherwise'],
+			// Middleware
+			'before'    => [$this, 'before'],
+			'after'     => [$this, 'after']
 		];
 	}	
 
