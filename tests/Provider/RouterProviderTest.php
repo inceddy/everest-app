@@ -110,4 +110,44 @@ class RouterProviderTest extends \PHPUnit_Framework_TestCase {
 		$app->any('/', $λ);
 		$app->otherwise($λ);
 	}
+
+	public function testMiddleware()
+	{
+		$ok = '';
+		$container = $this->getContainer();
+
+		$container->value('B', 'B');
+		$container->value('C', 'C');
+		$container->factory('Middleware', ['B', function($b) use (&$ok) {
+			return function(\Closure $next, Request $request, array $params)  use ($b, &$ok) {
+				$ok .= $b;
+				return $next($request, $params);
+			};
+		}]);
+		
+		$container->config(['RouterProvider', function($router) use (&$ok) {
+			// Classic middleware
+			$router->before(function(\Closure $next, Request $request, array $params) use (&$ok){
+				$ok .= 'A';
+				return $next($request, $params);
+			});
+
+			// Predefined middleware
+			$router->before('Middleware');
+
+			// Middleware with dependencies
+			$router->before(['C', function(\Closure $next, Request $request, array $params, string $c)  use (&$ok) {
+				$ok .= $c;
+				return $next($request, $params);
+			}]);
+
+			$router->otherwise(function() use (&$ok) {
+				return $ok .= 'D';
+			});
+		}]);
+
+		$response = $container['Router']->handle($container->Request);
+
+		$this->assertEquals('ABCD', $ok);
+	}
 }

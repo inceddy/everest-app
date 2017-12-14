@@ -81,7 +81,6 @@ class RouterProvider extends Router implements FactoryProviderInterface, Delegat
 		];
 	}	
 
-
 	/**
 	 * The factory method that will be uses by the injector.
 	 *
@@ -96,6 +95,64 @@ class RouterProvider extends Router implements FactoryProviderInterface, Delegat
 		$this->constructed = true;
 
 		return $this;
+	}
+
+	/**
+	 * Overload before to enable predefined middlewares 
+	 * and middleware wrapped in dependecy arrays.
+	 *
+	 * {@inheritDoc}
+	 */
+	
+	public function before(... $middlewares)
+	{
+		parent::before(... array_map(function($middleware) {
+			if (is_callable($middleware)) {
+				return $middleware;
+			}
+
+			return function(... $middlewareArgs) use ($middleware) {
+				// Predefined middleware
+				if (is_string($middleware)) {
+					return ($this->injector->get($middleware))(...$middlewareArgs);
+				}
+				// Middleware with dependencies
+				return $this->injector->invoke(
+					Container::getDependencyArray($middleware), 
+					[],
+					$middlewareArgs
+				);
+			};
+		}, $middlewares));
+	}
+
+	/**
+	 * Overload after to enable predefined middlewares 
+	 * and middleware wrapped in dependecy arrays.
+	 *
+	 * {@inheritDoc}
+	 */
+
+	public function after(... $middlewares)
+	{
+		parent::after(... array_map(function($middleware) {
+			if (is_callable($middleware)) {
+				return $middleware;
+			}
+
+			return function(... $middlewareArgs) use ($middleware) {
+				// Predefined middleware
+				if (is_string($middleware)) {
+					return ($this->injector->get($middleware))(...$middlewareArgs);
+				}
+				// Middleware with dependencies
+				return $this->injector->invoke(
+					Container::getDependencyArray($middleware), 
+					[],
+					$middlewareArgs
+				);
+			};
+		}, $middlewares));
 	}
 
 
