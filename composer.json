@@ -2,7 +2,7 @@
     "name": "everest/app",
     "description": "Everest - Application Component",
     "license": "MIT",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "authors": [
         {
             "name": "Philipp Steingrebe",
@@ -16,8 +16,8 @@
     },
     "require": {
         "php" : "^7.1",
-        "everest/container": "^1",
-        "everest/http": "^1"
+        "everest/container": "~1",
+        "everest/http": "~1"
     },
 
     "suggest": {
