@@ -34,7 +34,7 @@ class SessionProviderTest extends \PHPUnit_Framework_TestCase {
 	{
 		$called = false;
 		$app = new App();
-		$app->options('session', [
+		$app->options(['session' => [
 			'auto_start' => true,
 			'options' => [
 	      'secure'     => false,
@@ -44,7 +44,7 @@ class SessionProviderTest extends \PHPUnit_Framework_TestCase {
 	      'domain'     => 'test.com',
 	      'path'       => '/'
 			]
-		]);
+		]]);
 		$app->factory('SomeFactory', ['Session', function(Session $session) use (&$called) {
 			$session->set('a', 'foo');
 			$called = true;
