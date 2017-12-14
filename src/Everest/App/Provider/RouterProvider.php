@@ -164,11 +164,11 @@ class RouterProvider extends Router implements FactoryProviderInterface, Delegat
 	
 	public function route(Route $route, $handler)
 	{
-		return parent::route($route, function($request, $parameter, ... $middlewareArgs) use ($handler) {
+		return parent::route($route, function(... $RequestAndMiddlewareArgs) use ($handler) {
 			return $this->injector->invoke(
 				Container::getDependencyArray($handler), 
-				['RouteParameter' => $parameter, 'Request' => $request],
-				$middlewareArgs
+				[],
+				$RequestAndMiddlewareArgs
 			);
 		});
 	}

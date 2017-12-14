@@ -19,14 +19,10 @@ class RouterProviderTest extends \PHPUnit_Framework_TestCase {
 	{
 		return (new Container)
 		->factory('Request', [function(){
-			// Mock request
-			$request = $this->getMockBuilder(ServerRequest::CLASS)
-				->disableOriginalConstructor()
-				->getMock();
-
-			$request->method('getUri')->willReturn(Uri::from('http://steingrebe.de/prefix/test'));
-			$request->method('isMethod')->willReturn(true);
-			return $request;
+	    return new ServerRequest(
+	      ServerRequest::HTTP_ALL, 
+	      Uri::from('http://steingrebe.de/prefix/test?some=value#hash')
+	    );
 		}])
 		->value('TestValue', 'test-value')
 		->provider('Router', new RouterProvider);
@@ -44,12 +40,10 @@ class RouterProviderTest extends \PHPUnit_Framework_TestCase {
 		$called = false;
 
 		$container->config(['RouterProvider', function($router) use (&$called) {
-			$router->get('prefix/{id}', ['Request', 'RouteParameter', 'TestValue', 
-				function($request, $parameter, $testValue) use (&$called) {
+			$router->get('prefix/{id}', ['TestValue', 
+				function(RequestInterface $request, $testValue) use (&$called) {
 					$called = true;
-
-					$this->assertInstanceOf(RequestInterface::CLASS, $request);
-					$this->assertEquals(['id' => 'test'], $parameter);
+					$this->assertEquals(['id' => 'test'], $request->getAttribute('parameter'));
 					$this->assertEquals('test-value', $testValue);
 					return 'Not Empty Result';
 				}
@@ -119,26 +113,26 @@ class RouterProviderTest extends \PHPUnit_Framework_TestCase {
 		$container->value('B', 'B');
 		$container->value('C', 'C');
 		$container->factory('Middleware', ['B', function($b) use (&$ok) {
-			return function(\Closure $next, Request $request, array $params)  use ($b, &$ok) {
+			return function(\Closure $next, Request $request)  use ($b, &$ok) {
 				$ok .= $b;
-				return $next($request, $params);
+				return $next($request);
 			};
 		}]);
 		
 		$container->config(['RouterProvider', function($router) use (&$ok) {
 			// Classic middleware
-			$router->before(function(\Closure $next, Request $request, array $params) use (&$ok){
+			$router->before(function(\Closure $next, Request $request) use (&$ok){
 				$ok .= 'A';
-				return $next($request, $params);
+				return $next($request);
 			});
 
 			// Predefined middleware
 			$router->before('Middleware');
 
 			// Middleware with dependencies
-			$router->before(['C', function(\Closure $next, Request $request, array $params, string $c)  use (&$ok) {
+			$router->before(['C', function(\Closure $next, Request $request, string $c)  use (&$ok) {
 				$ok .= $c;
-				return $next($request, $params);
+				return $next($request);
 			}]);
 
 			$router->otherwise(function() use (&$ok) {
