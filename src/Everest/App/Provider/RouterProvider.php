@@ -106,7 +106,7 @@ class RouterProvider extends Router implements FactoryProviderInterface, Delegat
 	
 	public function before(... $middlewares)
 	{
-		parent::before(... array_map(function($middleware) {
+		return parent::before(... array_map(function($middleware) {
 			if (is_callable($middleware)) {
 				return $middleware;
 			}
@@ -135,7 +135,7 @@ class RouterProvider extends Router implements FactoryProviderInterface, Delegat
 
 	public function after(... $middlewares)
 	{
-		parent::after(... array_map(function($middleware) {
+		return parent::after(... array_map(function($middleware) {
 			if (is_callable($middleware)) {
 				return $middleware;
 			}
@@ -164,6 +164,11 @@ class RouterProvider extends Router implements FactoryProviderInterface, Delegat
 	
 	public function route(Route $route, $handler)
 	{
+		// No dependency resolving from parameters!
+		if (is_callable($handler)) {
+			return parent::route($route, $handler);
+		}
+
 		return parent::route($route, function(... $RequestAndMiddlewareArgs) use ($handler) {
 			return $this->injector->invoke(
 				Container::getDependencyArray($handler), 
@@ -182,6 +187,11 @@ class RouterProvider extends Router implements FactoryProviderInterface, Delegat
 
 	public function context(string $prefix, $invoker) 
 	{
+		// No dependency resolving from parameters!
+		if (is_callable($invoker)) {
+			return parent::context($prefix, $invoker);
+		}
+
 		return parent::context($prefix, function() use ($invoker) {
 			return $this->injector->invoke(
 				Container::getDependencyArray($invoker), [], [$this]
@@ -198,6 +208,11 @@ class RouterProvider extends Router implements FactoryProviderInterface, Delegat
 	
 	public function otherwise($handler)
 	{
+		// No dependency resolving from parameters!
+		if (is_callable($handler)) {
+			return parent::otherwise($handler);
+		}
+
 		return parent::otherwise(function($request) use ($handler) {
 			return $this->injector->invoke(
 				Container::getDependencyArray($handler), 
