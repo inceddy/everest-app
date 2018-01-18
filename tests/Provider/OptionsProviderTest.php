@@ -49,9 +49,4 @@ class OptionsProviderTest extends \PHPUnit\Framework\TestCase {
 		$provider->getFactory();
 		$provider->add(new Options([]));
 	}
-
-	public function testInApp()
-	{
-		new App();
-	}
 }

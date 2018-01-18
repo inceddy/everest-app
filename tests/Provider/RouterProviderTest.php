@@ -6,6 +6,7 @@ use Everest\Http\Responses\Response;
 use Everest\Http\Requests\RequestInterface;
 use Everest\Http\Requests\ServerRequest;
 use Everest\Http\Requests\Request;
+use Everest\Http\Router;
 use Everest\Http\Uri;
 
 use Everest\Container\Container;
@@ -83,16 +84,26 @@ class RouterProviderTest extends \PHPUnit\Framework\TestCase {
 
 			$router->context('prefix', ['TestValue', function(Router $router, $testValue){
 				$this->assertEquals('test-value', $testValue);
+				$router->get('/', function(){
+					return '';
+				});
 			}]);
 
 		}]);
 
-		$response = $container['Router'];
+		$response = $container['Router']->handle(
+			new ServerRequest(ServerRequest::HTTP_GET, Uri::from('http://a.de/prefix'))
+		);
 	}
 
 	public function testDelegates()
 	{
-		$λ = function(){};
+		$count = 0;
+
+		$λ = function() use (&$count) {
+			$count++;
+			return '';
+		};
 
 		$app = new Everest\App\App;
 		$app->context('some-context', $λ);
@@ -103,6 +114,9 @@ class RouterProviderTest extends \PHPUnit\Framework\TestCase {
 		$app->delete('/', $λ);
 		$app->any('/', $λ);
 		$app->otherwise($λ);
+
+		$app->run(new ServerRequest(ServerRequest::HTTP_GET, Uri::from('http://a.de/')));
+		$this->assertEquals(1, $count);
 	}
 
 	public function testMiddleware()
