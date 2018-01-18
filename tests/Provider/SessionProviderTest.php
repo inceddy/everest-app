@@ -13,7 +13,7 @@ use Everest\Container\FactoryProviderInterface;
 /**
  * @author  Philipp Steingrebe <philipp@steingrebe.de>
  */
-class SessionProviderTest extends \PHPUnit_Framework_TestCase {
+class SessionProviderTest extends \PHPUnit\Framework\TestCase {
 
 	public function testProviderConstructionAndInterfaces()
 	{

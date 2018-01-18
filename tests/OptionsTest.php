@@ -5,7 +5,7 @@ use Everest\App\Options;
 /**
  * @author  Philipp Steingrebe <philipp@steingrebe.de>
  */
-class OptionsTest extends \PHPUnit_Framework_TestCase {
+class OptionsTest extends \PHPUnit\Framework\TestCase {
 
 	public function testCasting()
 	{

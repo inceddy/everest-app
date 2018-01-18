@@ -13,7 +13,7 @@ use Everest\Container\Container;
 /**
  * @author  Philipp Steingrebe <philipp@steingrebe.de>
  */
-class RouterProviderTest extends \PHPUnit_Framework_TestCase {
+class RouterProviderTest extends \PHPUnit\Framework\TestCase {
 
 	public function getContainer()
 	{

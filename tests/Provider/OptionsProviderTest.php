@@ -11,7 +11,7 @@ use Everest\Container\FactoryProviderInterface;
 /**
  * @author  Philipp Steingrebe <philipp@steingrebe.de>
  */
-class OptionsProviderTest extends \PHPUnit_Framework_TestCase {
+class OptionsProviderTest extends \PHPUnit\Framework\TestCase {
 
 	public function testProviderConstructionAndInterfaces()
 	{
