@@ -2,7 +2,7 @@
     "name": "everest/app",
     "description": "Everest - Application Component",
     "license": "MIT",
-    "version": "1.1.2",
+    "version": "1.2.0",
     "authors": [
         {
             "name": "Philipp Steingrebe",
