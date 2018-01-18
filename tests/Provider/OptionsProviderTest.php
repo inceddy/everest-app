@@ -33,12 +33,14 @@ class OptionsProviderTest extends \PHPUnit\Framework\TestCase {
 	{
 		$provider = new OptionsProvider(new Options(['initial' => 1]));
 		$provider->add(new Options(['runtime' => 2]));
+		$provider->add(new Options(['a' => 3]), 'namespace');
 
 		$factory = $provider->getFactory();
 		$options = $factory[0]();
 		
 		$this->assertSame(1, $options('initial'));
 		$this->assertSame(2, $options('runtime'));
+		$this->assertSame(3, $options('namespace.a'));
 	}
 
 	public function testProviderState()

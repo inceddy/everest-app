@@ -52,13 +52,13 @@ class OptionsProvider implements FactoryProviderInterface, DelegateProviderInter
 	 * @param Everest\App\Options $options
 	 */
 	
-	public function add(Options $options)
+	public function add(Options $options, string $namespace = null)
 	{
 		if ($this->state === self::STATE_INITIALIZED) {
 			throw new \RuntimeException('You cant add new options if provider is already initialized.');
 		}
 
-		$this->options[] = $options;
+		$this->options[] = [$options, $namespace];
 	}
 
 	/**
@@ -70,8 +70,9 @@ class OptionsProvider implements FactoryProviderInterface, DelegateProviderInter
 		$this->state = self::STATE_INITIALIZED;
 
 		return [function(){
-			return array_reduce($this->options, function($carry, $options) {
-				return $carry->merge($options);
+			return array_reduce($this->options, function($carry, $optionsAndNamespace) {
+				[$options, $namespace] = $optionsAndNamespace;
+				return $carry->merge($options, $namespace);
 			}, $this->initialOptions);
 		}];
 	}
@@ -83,8 +84,8 @@ class OptionsProvider implements FactoryProviderInterface, DelegateProviderInter
 	public function getDelegates() : array
 	{
 		return [
-			'options' => function($options) {
-				$this->add(Options::from($options));
+			'options' => function($options, string $namespace = null) {
+				$this->add(Options::from($options), $namespace);
 			}
 		];
 	}

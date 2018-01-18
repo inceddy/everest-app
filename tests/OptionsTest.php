@@ -12,6 +12,10 @@ class OptionsTest extends \PHPUnit\Framework\TestCase {
 		$this->assertInstanceOf(Options::CLASS, Options::from(['a' => 1, 'b' => 'foo']));
 		$this->assertInstanceOf(Options::CLASS, Options::from(__DIR__ . '/fixtures/SomeOptions.php'));
 		$this->assertInstanceOf(Options::CLASS, Options::from(__DIR__ . '/fixtures/SomeOptions.json'));
+		$this->assertInstanceOf(Options::CLASS, Options::from(__DIR__ . '/fixtures/SomeOptions.ini'));
+
+		$this->assertInstanceOf(Options::CLASS, Options::fromIniFile(__DIR__ . '/fixtures/SomeOptions.ini'));
+		$this->assertInstanceOf(Options::CLASS, Options::fromJsonFile(__DIR__ . '/fixtures/SomeOptions.json'));
 	}
 
 	public function testCastingWithUnknownFileExtension()
@@ -74,5 +78,20 @@ class OptionsTest extends \PHPUnit\Framework\TestCase {
 		$this->assertSame(2, $options('a.c'));
 		$this->assertSame(20, $options('d'));
 		$this->assertSame([1,2,3,4,5], $options('e'));
+	}
+
+	public function testMergeWithNamespace()
+	{
+		$optionsA = Options::from([
+			'ns_a' => ['a' => 20, 'b' => 30], 
+		]);
+
+		$optionsB = Options::from(['a' => 40]);
+
+		$options = $optionsA->merge($optionsB, 'ns_b')->merge($optionsB, 'ns_a');
+
+		$this->assertEquals(40, $options('ns_a.a'));
+		$this->assertEquals(30, $options('ns_a.b'));
+		$this->assertEquals(40, $options('ns_b.a'));
 	}
 }
