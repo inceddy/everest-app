@@ -68,18 +68,6 @@ class App extends Container {
 	}
 
 	/**
-	 * Decorator
-	 * 
-	 * {@inheritDoc}
-	 */
-	
-	public function import(Container $container, string $prefix = null)
-	{
-		parent::import($container, $prefix);
-		return $this;
-	}
-
-	/**
 	 * Overload provider method to catch providers with delegates.
 	 * 
 	 * {@inheritDoc}
