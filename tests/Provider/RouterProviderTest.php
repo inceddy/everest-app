@@ -121,22 +121,22 @@ class RouterProviderTest extends \PHPUnit\Framework\TestCase {
 
 	public function testMiddleware()
 	{
-		$ok = '';
+		$called = true;
 		$container = $this->getContainer();
 
 		$container->value('B', 'B');
 		$container->value('C', 'C');
-		$container->factory('Middleware', ['B', function($b) use (&$ok) {
-			return function(\Closure $next, Request $request)  use ($b, &$ok) {
-				$ok .= $b;
+		$container->factory('Middleware', ['B', function($b) use (&$called) {
+			return function(\Closure $next, Request $request)  use ($b, &$called) {
+				$called &= true;
 				return $next($request);
 			};
 		}]);
 		
-		$container->config(['RouterProvider', function($router) use (&$ok) {
+		$container->config(['RouterProvider', function($router) use (&$called) {
 			// Classic middleware
-			$router->before(function(\Closure $next, Request $request) use (&$ok){
-				$ok .= 'A';
+			$router->before(function(\Closure $next, Request $request) use (&$called){
+				$called &= true;
 				return $next($request);
 			});
 
@@ -144,18 +144,19 @@ class RouterProviderTest extends \PHPUnit\Framework\TestCase {
 			$router->before('Middleware');
 
 			// Middleware with dependencies
-			$router->before(['C', function(\Closure $next, Request $request, string $c)  use (&$ok) {
-				$ok .= $c;
+			$router->before(['C', function(\Closure $next, Request $request, string $c)  use (&$called) {
+				$called &= true;
 				return $next($request);
 			}]);
 
-			$router->otherwise(function() use (&$ok) {
-				return $ok .= 'D';
+			$router->otherwise(function() use (&$called) {
+				$called &= true;
+				return 'ok';
 			});
 		}]);
 
 		$response = $container['Router']->handle($container->Request);
 
-		$this->assertEquals('ABCD', $ok);
+		$this->assertTrue((bool)$called);
 	}
 }
