@@ -159,4 +159,20 @@ class RouterProviderTest extends \PHPUnit\Framework\TestCase {
 
 		$this->assertTrue((bool)$called);
 	}
+
+	public function testMiddlewareRequestModification()
+	{
+		$container = $this->getContainer();
+		$container['Middleware'] = function(\Closure $next, ServerRequest $request) {
+			return $next($request->withUri(Uri::from('http://foo.bar/foo_bar')));
+		};
+		$container->config(['RouterProvider', function($router) use (&$called) {
+			$router->before('Middleware');
+			$router->otherwise(['Request', function($request){
+				$this->assertSame('foo_bar', $request->getUri()->getPath());
+				return 'ok';
+			}]);
+		}]);
+		$container['Router']->handle($container->Request);
+	}
 }
