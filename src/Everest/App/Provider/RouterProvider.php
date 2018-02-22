@@ -213,10 +213,10 @@ class RouterProvider extends Router implements FactoryProviderInterface, Delegat
 			return parent::otherwise($handler);
 		}
 
-		return parent::otherwise(function($request) use ($handler) {
+		return parent::otherwise(function($request, $orgRequest) use ($handler) {
 			return $this->injector->invoke(
-				Container::getDependencyArray($handler), 
-				['Request' => $request]
+				Container::getDependencyArray($handler),
+				['Request' => $request, 'OriginalRequest' => $orgRequest]
 			);
 		});
 	}
