@@ -72,6 +72,7 @@ class RouterProvider extends Router implements FactoryProviderInterface, Delegat
 			'get'       => [$this, 'get'],
 			'post'      => [$this, 'post'],
 			'put'       => [$this, 'put'],
+			'patch'     => [$this, 'patch'],
 			'delete'    => [$this, 'delete'],
 			'any'       => [$this, 'any'],
 			'otherwise' => [$this, 'otherwise'],

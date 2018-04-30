@@ -111,6 +111,7 @@ class RouterProviderTest extends \PHPUnit\Framework\TestCase {
 		$app->get('/', $λ);
 		$app->post('/', $λ);
 		$app->put('/', $λ);
+		$app->patch('/', $λ);
 		$app->delete('/', $λ);
 		$app->any('/', $λ);
 		$app->otherwise($λ);
