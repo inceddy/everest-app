@@ -20,8 +20,6 @@ use Everest\App\Provider\SessionProvider;
 use Everest\Container\Container;
 use Everest\Container\FactoryProviderInterface;
 
-use InvalidArgumentException;
-
 class App extends Container {
 
 	/**
@@ -130,6 +128,12 @@ class App extends Container {
 		}
 
 		throw new \BadMethodCallException(sprintf('Unkown method %s.', $name));
+	}
+
+	public function boot()
+	{
+		parent::boot();
+		Alias::setApp($this);
 	}
 
 
