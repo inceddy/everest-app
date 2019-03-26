@@ -4,7 +4,7 @@
 /**
  * @author  Philipp Steingrebe <philipp@steingrebe.de>
  */
-class ContainerTest extends \PHPUnit\Framework\TestCase {
+class AppTest extends \PHPUnit\Framework\TestCase {
 
 	public function testContainerExtension()
 	{
