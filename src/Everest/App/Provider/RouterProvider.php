@@ -76,6 +76,7 @@ class RouterProvider extends Router implements FactoryProviderInterface, Delegat
 			'delete'    => [$this, 'delete'],
 			'any'       => [$this, 'any'],
 			'otherwise' => [$this, 'otherwise'],
+			'error'     => [$this, 'error'],
 			// Middleware
 			'before'    => [$this, 'before'],
 			'after'     => [$this, 'after']
@@ -218,6 +219,27 @@ class RouterProvider extends Router implements FactoryProviderInterface, Delegat
 			return $this->injector->invoke(
 				Container::getDependencyArray($handler),
 				['Request' => $request, 'OriginalRequest' => $orgRequest]
+			);
+		});
+	}
+
+	/**
+	 * Overload error to wrap error handlers in a dependency array
+	 *
+	 * {@inheritDoc}
+	 */
+	
+	public function error($handler)
+	{
+		// No dependency resolving from parameters!
+		if (is_callable($handler)) {
+			return parent::error($handler);
+		}
+
+		return parent::error(function($error, $request) use ($handler) {
+			return $this->injector->invoke(
+				Container::getDependencyArray($handler),
+				['Error' => $error, 'Request' => $request]
 			);
 		});
 	}
