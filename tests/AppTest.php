@@ -26,8 +26,8 @@ class AppTest extends \PHPUnit\Framework\TestCase {
 
 		// Test value (with provider)
 		$app->boot();
-		$this->assertEquals('bar', $app['foo']);
-		$this->assertEquals('bar2', $app['foo2']);
+		$this->assertEquals('bar', $app->container()['foo']);
+		$this->assertEquals('bar2', $app->container()['foo2']);
 
 	}
 
@@ -67,7 +67,7 @@ class AppTest extends \PHPUnit\Framework\TestCase {
 		$app->boot();
 
 		$this->assertTrue($called);
-		$this->assertSame(1, $app['fac']);
-		$this->assertSame(2, $app['fac2']);
+		$this->assertSame(1, $app->container()['fac']);
+		$this->assertSame(2, $app->container()['fac2']);
 	}
 }

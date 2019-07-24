@@ -94,7 +94,7 @@ abstract class Alias {
 	{
 		$name = static::getName();
 		return self::$components[$name] ?? 
-		       self::$components[$name] = self::$app[$name];
+		       self::$components[$name] = self::$app->container()[$name];
 	}
 
 	/**

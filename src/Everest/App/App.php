@@ -20,7 +20,7 @@ use Everest\App\Provider\SessionProvider;
 use Everest\Container\Container;
 use Everest\Container\FactoryProviderInterface;
 
-class App extends Container {
+class App implements \ArrayAccess {
 
 	/**
 	 * Deletegated provider methods
@@ -29,16 +29,25 @@ class App extends Container {
 	
 	private $delegates;
 
+	/**
+	 * Dependency container wrapped by this app
+	 * @var Container
+	 */
+	
+	private $container;
+
 	public function __construct(...$arguments)
 	{
-		parent::__construct(...$arguments);
-
 		// Initialize delegates
 		$this->delegates = [];
 
-		// Define logger
-		$this->value('Logger', null);
+		// Initialize container
+		$this->container = new Container(... $arguments);
 
+		// Define App
+		$this->value('App', $this);
+		// Define Logger
+		$this->value('Logger', null);
 		// Define default error handler
 		$this->factory('ErrorHandler', ['Logger', function($logger){
 			return function(\Throwable $error) use ($logger) {
@@ -66,6 +75,16 @@ class App extends Container {
 	}
 
 	/**
+	 * Returns the dependency container of this app
+	 * @return Container
+	 */
+	
+	public function container() : Container
+	{
+		return $this->container;
+	}
+
+	/**
 	 * Overload provider method to catch providers with delegates.
 	 * 
 	 * {@inheritDoc}
@@ -73,12 +92,32 @@ class App extends Container {
 	
 	public function provider(string $name, FactoryProviderInterface $provider)
 	{
-		parent::provider($name, $provider);
+		$this->container->provider($name, $provider);
 
 		if ($provider instanceof DelegateProviderInterface) {
 			$this->delegates = array_merge($this->delegates, $provider->getDelegates());
 		}
 
+		return $this;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+
+	public function decorator($name, $decorator)
+	{
+		$this->container($name, $decorator);
+		return $this;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	
+	public function service($name, $service)
+	{
+		$this->container->service($name, $service);
 		return $this;
 	}
 
@@ -97,8 +136,78 @@ class App extends Container {
 	
 	public function controller(string $name, $dependenciesAndClassname) 
 	{
-		return $this->service($name . 'Controller', $dependenciesAndClassname);
+		return $this->container->service($name . 'Controller', $dependenciesAndClassname);
 	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	
+	public function import(Container $container, string $prefix = null)
+	{
+		$this->container->import($container, $prefix);
+		return $this;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	
+	public function factory(string $name, $factory)
+	{
+		$this->container->factory($name, $factory);
+		return $this;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	
+	public function value(string $name, $value)
+	{
+		$this->container->value($name, $value);
+		return $this;
+	}
+
+
+	/**
+	 * {@inheritDoc}
+	 */
+	
+	public function constant(string $name, $value)
+	{
+		$this->container->constant($name, $value);
+		return $this;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	
+	public function config($config)
+	{
+		$this->container->config($config);
+		return $this;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+
+	public function __set(string $name, $value)
+	{
+		return $this->container->value($name, $value);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	
+	public function __get(string $name)
+	{
+		return $this->container->offsetGet($name);
+	}
+
 
 	/**
 	 * Handle provider delegates
@@ -113,11 +222,13 @@ class App extends Container {
 	
 	public function __call($name, $arguments)
 	{
+		/*
 		if ($this->state !== self::STATE_INITIAL) {
 			throw new \RuntimeException(
 				'Delegates can only be called while container is in inital state.'
 			);
 		}
+		*/
 
 		if (isset($this->delegates[$name])) {
 			$this->config([function() use ($name, $arguments) {
@@ -127,12 +238,16 @@ class App extends Container {
 			return $this;
 		}
 
-		throw new \BadMethodCallException(sprintf('Unkown method %s.', $name));
+		throw new \BadMethodCallException(sprintf(
+			'Unkown delegate method %s. Use one of %s', 
+			$name,
+			implode(', ', array_keys($this->delegates))
+		));
 	}
 
 	public function boot()
 	{
-		parent::boot();
+		$this->container->boot();
 		Alias::setApp($this);
 	}
 
@@ -144,21 +259,45 @@ class App extends Container {
 	
 	public function run(RequestInterface $request = null, bool $catch = true)
 	{
-		$this->constant('Request', $request ?: ServerRequest::fromGlobals());
+		$this->container->constant('Request', $request ?: ServerRequest::fromGlobals());
 		$this->boot();
 
 		try {		
-			$response = $this->Router->handle($this->Request);
+			$response = $this->container['Router']->handle($this->container['Request']);
 		}
 		catch (\Throwable $error) {
 			if (!$catch) {
 				throw $error;
 			}
-			$response = ($this->ErrorHandler)($error);
+			$response = ($this->container['ErrorHandler'])($error);
 		}
 
 		$response->send();
 
 		return $this;
+	}
+
+	public function offsetGet($key)
+	{
+		trigger_error('Method ' . __METHOD__ . ' is deprecated sice 1.4.0', E_USER_DEPRECATED);
+		return $this->container->offsetGet($key);
+	}
+
+	public function offsetSet($key, $value)
+	{
+		trigger_error('Method ' . __METHOD__ . ' is deprecated sice 1.4.0', E_USER_DEPRECATED);
+		return $this->container->offsetSet($key, $value);
+	}
+
+	public function offsetExists($name)
+	{
+		trigger_error('Method ' . __METHOD__ . ' is deprecated sice 1.4.0', E_USER_DEPRECATED);
+		return $this->container->offsetExists($name);
+	}
+
+	public function offsetUnset($name)
+	{
+		trigger_error('Method ' . __METHOD__ . ' is deprecated sice 1.4.0', E_USER_DEPRECATED);
+		return $this->container->offsetUnset($name);
 	}
 }
