@@ -187,8 +187,13 @@ class RouterProvider extends Router implements FactoryProviderInterface, Delegat
 	 * {@inheritDoc}
 	 */
 
-	public function context(string $prefix, $invoker) 
+	public function context($prefix, $invoker = null) 
 	{
+		if ($invoker === null) {
+			$invoker = $prefix;
+			$prefix = '';
+		}
+
 		// No dependency resolving from parameters!
 		if (is_callable($invoker)) {
 			return parent::context($prefix, $invoker);
