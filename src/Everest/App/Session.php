@@ -145,9 +145,9 @@ class Session implements
    * {@inheritDoc}
    */
 
-  public function get(string $key) 
+  public function get(string $key, $default = null) 
   {
-      return $_SESSION[$key] ?? null;
+      return $_SESSION[$key] ?? $default;
   }
 
 
