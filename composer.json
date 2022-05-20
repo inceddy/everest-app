@@ -14,9 +14,9 @@
         }
     },
     "require": {
-        "php" : "^7.2",
-        "everest/container": "^1.1",
-        "everest/http": "^1.2"
+        "php" : ">=8.0",
+        "everest/container": "^2.0",
+        "everest/http": "^2.0"
     },
 
     "suggest": {

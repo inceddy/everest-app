@@ -116,7 +116,14 @@ class RouterProviderTest extends \PHPUnit\Framework\TestCase {
 		$app->any('/', $λ);
 		$app->otherwise($λ);
 
-		$app->run(new ServerRequest(ServerRequest::HTTP_GET, Uri::from('http://a.de/')));
+		$app->boot();
+		$app->container()['Router']->handle(
+			new ServerRequest(
+				ServerRequest::HTTP_GET,
+				Uri::from('http://a.de/')
+			)
+		);
+
 		$this->assertEquals(1, $count);
 	}
 

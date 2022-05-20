@@ -16,7 +16,7 @@ use Everest\App\Alias\Session as SessionAlias;
 
 class AliasTest extends \PHPUnit\Framework\TestCase {
 
-	public function setUp()
+	public function setUp() : void
 	{
 		Alias::reset();
 	}

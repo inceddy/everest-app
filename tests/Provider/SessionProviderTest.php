@@ -17,8 +17,8 @@ class SessionProviderTest extends \PHPUnit\Framework\TestCase {
 
 	public function testProviderConstructionAndInterfaces()
 	{
-		$this->assertInstanceOf(SessionProvider::CLASS, $provider = new SessionProvider);
-		$this->assertInstanceOf(FactoryProviderInterface::CLASS, $provider);
+		$this->assertInstanceOf(SessionProvider::class, $provider = new SessionProvider);
+		$this->assertInstanceOf(FactoryProviderInterface::class, $provider);
 	}
 
 	public function testFactory()
@@ -49,12 +49,7 @@ class SessionProviderTest extends \PHPUnit\Framework\TestCase {
 			$session->set('a', 'foo');
 			$called = true;
 		}]);
-
-		// Supress error response cause of no matching route
-		ob_start();
-		$app->run(new ServerRequest(ServerRequest::HTTP_POST, Uri::from('test.com')));
 		$app->SomeFactory;
-		ob_end_clean();
 
 		$this->assertTrue($called);
 	}

@@ -92,7 +92,7 @@ class Session implements
       throw new \Exception('Session is already running.');
     }
 
-    
+    header('Blaa');
     if (ini_set('session.use_only_cookies', $this->options['cookieonly']) === false) {
       throw new \Exception('Error setting \'session.use_only_cookies\'.');
     }
@@ -274,7 +274,7 @@ class Session implements
    * @return int
    */
   
-  public function count()
+  public function count() : int
   {
       return count($_SESSION);
   }
@@ -285,7 +285,7 @@ class Session implements
    * @return ArrayIterator
    */
   
-  public function getIterator()
+  public function getIterator() : ArrayIterator
   {
     return new ArrayIterator($_SESSION);
   }

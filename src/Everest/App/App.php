@@ -11,14 +11,15 @@
 
 namespace Everest\App;
 
-use Everest\Http\Requests\ServerRequest;
-use Everest\Http\Requests\RequestInterface;
-use Everest\Http\Responses\Response;
+use Everest\App\Options;
 use Everest\App\Provider\OptionsProvider;
 use Everest\App\Provider\RouterProvider;
 use Everest\App\Provider\SessionProvider;
 use Everest\Container\Container;
 use Everest\Container\FactoryProviderInterface;
+use Everest\Http\Requests\RequestInterface;
+use Everest\Http\Requests\ServerRequest;
+use Everest\Http\Responses\Response;
 
 class App implements \ArrayAccess {
 
@@ -277,27 +278,27 @@ class App implements \ArrayAccess {
 		return $this;
 	}
 
-	public function offsetGet($key)
+	public function offsetGet(mixed $key) : mixed
 	{
 		trigger_error('Method ' . __METHOD__ . ' is deprecated sice 1.4.0', E_USER_DEPRECATED);
 		return $this->container->offsetGet($key);
 	}
 
-	public function offsetSet($key, $value)
+	public function offsetSet(mixed $key, mixed $value) : void
 	{
 		trigger_error('Method ' . __METHOD__ . ' is deprecated sice 1.4.0', E_USER_DEPRECATED);
-		return $this->container->offsetSet($key, $value);
+		$this->container->offsetSet($key, $value);
 	}
 
-	public function offsetExists($name)
+	public function offsetExists(mixed $name) : bool
 	{
 		trigger_error('Method ' . __METHOD__ . ' is deprecated sice 1.4.0', E_USER_DEPRECATED);
 		return $this->container->offsetExists($name);
 	}
 
-	public function offsetUnset($name)
+	public function offsetUnset(mixed $name) : void
 	{
 		trigger_error('Method ' . __METHOD__ . ' is deprecated sice 1.4.0', E_USER_DEPRECATED);
-		return $this->container->offsetUnset($name);
+		$this->container->offsetUnset($name);
 	}
 }
