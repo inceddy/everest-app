@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of Everest.
  *
@@ -10,15 +12,17 @@
  */
 
 namespace Everest\App\Alias;
+
 use Everest\App\Alias;
 
 /**
  * Alias for request
  */
 
-class Request extends Alias {
-	protected static function getName() : string
-	{
-		return 'Request';
-	}
+class Request extends Alias
+{
+    protected static function getName(): string
+    {
+        return 'Request';
+    }
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of Everest.
  *
@@ -10,83 +12,72 @@
  */
 
 namespace Everest\App\Provider;
-use Everest\Container\FactoryProviderInterface;
+
 use Everest\App\DelegateProviderInterface;
 use Everest\App\Options;
+use Everest\Container\FactoryProviderInterface;
+use RuntimeException;
 
-class OptionsProvider implements FactoryProviderInterface, DelegateProviderInterface {
+class OptionsProvider implements FactoryProviderInterface, DelegateProviderInterface
+{
+    private const STATE_IDLE = 0;
 
-	private const STATE_IDLE = 0;
-	private const STATE_INITIALIZED = 1;
+    private const STATE_INITIALIZED = 1;
 
-	/**
-	 * Provider state
-	 * @var int
-	 */
-	
-	private $state;
+    /**
+     * Provider state
+     */
+    private int $state;
 
-	/**
-	 * Options instances
-	 * @var array
-	 */
-	
-	private $options;
+    /**
+     * Options instances
+     */
+    private array $options;
 
-	/**
-	 * Initial options instance
-	 * @var Everest\App\Options
-	 */
-	
-	private $initialOptions;
+    /**
+     * Initial options instance
+     */
+    private readonly Options $initialOptions;
 
-	public function __construct(Options $initialOptions = null)
-	{
-		$this->state = self::STATE_IDLE;
-		$this->options = [];
-		$this->initialOptions = $initialOptions ?: new Options;
-	}
+    public function __construct(Options $initialOptions = null)
+    {
+        $this->state = self::STATE_IDLE;
+        $this->options = [];
+        $this->initialOptions = $initialOptions ?: new Options();
+    }
 
-	/**
-	 * Adds new options to this provider
-	 * @param Everest\App\Options $options
-	 */
-	
-	public function add(Options $options, string $namespace = null)
-	{
-		if ($this->state === self::STATE_INITIALIZED) {
-			throw new \RuntimeException('You cant add new options if provider is already initialized.');
-		}
+    /**
+     * Adds new options to this provider
+     */
+    public function add(Options $options, string $namespace = null)
+    {
+        if ($this->state === self::STATE_INITIALIZED) {
+            throw new RuntimeException('You cant add new options if provider is already initialized.');
+        }
 
-		$this->options[] = [$options, $namespace];
-	}
+        $this->options[] = [$options, $namespace];
+    }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	
-	public function getFactory()
-	{
-		$this->state = self::STATE_INITIALIZED;
 
-		return [function(){
-			return array_reduce($this->options, function($carry, $optionsAndNamespace) {
-				[$options, $namespace] = $optionsAndNamespace;
-				return $carry->merge($options, $namespace);
-			}, $this->initialOptions);
-		}];
-	}
+    public function getFactory()
+    {
+        $this->state = self::STATE_INITIALIZED;
 
-	/**
-	 * {@inheritDoc}
-	 */
-	
-	public function getDelegates() : array
-	{
-		return [
-			'options' => function($options, string $namespace = null) {
-				$this->add(Options::from($options), $namespace);
-			}
-		];
-	}
+        return [
+            fn () => array_reduce($this->options, function ($carry, $optionsAndNamespace) {
+                        [$options, $namespace] = $optionsAndNamespace;
+                        return $carry->merge($options, $namespace);
+                    }, $this->initialOptions),
+        ];
+    }
+
+
+    public function getDelegates(): array
+    {
+        return [
+            'options' => function ($options, string $namespace = null) {
+                $this->add(Options::from($options), $namespace);
+            },
+        ];
+    }
 }

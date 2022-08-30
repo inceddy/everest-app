@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of Everest.
  *
@@ -10,292 +12,236 @@
  */
 
 namespace Everest\App;
-use Countable;
-use IteratorAggregate;
-use ArrayIterator;
 
-class Session implements 
-    SessionInterface, 
-    Countable, 
-    IteratorAggregate
+use ArrayIterator;
+use Countable;
+use Exception;
+use IteratorAggregate;
+use LogicException;
+use Stringable;
+
+class Session implements
+    SessionInterface,
+    Countable,
+    IteratorAggregate,
+    Stringable
 {
-  /**
-   * The default session options
-   * @var array
-   */
-  
-  private $options = [
-      'secure'     => false,
-      'httponly'   => false,
-      'cookieonly' => true
-      /*
+    /**
+     * The default session options
+     */
+    private array $options = [
+        'secure' => false,
+        'httponly' => false,
+        'cookieonly' => true,
+        /*
       'lifetime'   => 1800,
       'domain'     => '.example.com',
       'path'       => '/'
       */
-  ];
+    ];
 
-  /**
-   * The session state
-   * @var bool
-   */
-  
-  private $started;
+    /**
+     * The session state
+     */
+    private bool $started;
 
-
-  /**
-   * Returns wether or not a session is currently running
-   * @return bool
-   */
-  
-  private static function started() : bool
-  {
-    return function_exists('session_status') ? session_status() === \PHP_SESSION_ACTIVE : '' !== session_id();
-  }
-
-  /**
-   * Returns wether or not the session is currently stopped
-   * @return bool
-   */
-  
-  private static function stoped() : bool
-  {
-    return function_exists('session_status') ? session_status() === \PHP_SESSION_NONE : '' === session_id();
-  }
-
-
-  /**
-   * Constructor
-   *
-   * @param array $options 
-   *    The options to use for this session instance
-   */
-  
-  function __construct(array $options = [])
-  {
-    $this->options = array_merge(session_get_cookie_params(), $this->options, $options);
-    $this->started = $this->started();
-  }
-
-
-  /**
-   * {@inheritDoc}
-   */
-  
-  public function start()
-  {
-    if ($this->started) {
-      return $this;
+    /**
+     * Constructor
+     *
+     * @param array $options
+     *    The options to use for this session instance
+     */
+    public function __construct(array $options = [])
+    {
+        $this->options = array_merge(session_get_cookie_params(), $this->options, $options);
+        $this->started = self::started();
     }
 
-    if (self::started()) {
-      throw new \Exception('Session is already running.');
+    /**
+     * Returns string representation of this collection for debug proposes
+     */
+    public function __toString(): string
+    {
+        $string = '';
+
+        foreach ($_SESSION as $key => $parameter) {
+            $string .= sprintf("%s = %s\r\n", $key, $parameter);
+        }
+
+        return $string;
     }
 
-    header('Blaa');
-    if (ini_set('session.use_only_cookies', $this->options['cookieonly']) === false) {
-      throw new \Exception('Error setting \'session.use_only_cookies\'.');
+
+    public function start()
+    {
+        if ($this->started) {
+            return $this;
+        }
+
+        if (self::started()) {
+            throw new Exception('Session is already running.');
+        }
+
+        header('Blaa');
+        if (ini_set('session.use_only_cookies', $this->options['cookieonly']) === false) {
+            throw new Exception('Error setting \'session.use_only_cookies\'.');
+        }
+
+        if (ini_set('session.cookie_httponly', $this->options['httponly']) === false) {
+            throw new Exception('Error setting \'session.cookie_httponly\'.');
+        }
+
+        session_set_cookie_params(
+            $this->options['lifetime'],
+            $this->options['path'],
+            $this->options['domain'],
+            $this->options['secure'],
+            $this->options['httponly']
+        );
+
+        if (! ($this->started = session_start())) {
+            throw new Exception('Unable to start session.');
+        }
     }
-   
-    if (ini_set('session.cookie_httponly', $this->options['httponly']) === false) {
-      throw new \Exception('Error setting \'session.cookie_httponly\'.');
+
+
+    public function stop()
+    {
+        if (! session_write_close()) {
+            throw new Exception('Unable to stop session.');
+        }
+
+        $this->started = false;
+
+        return $this;
     }
 
-    session_set_cookie_params(
-      $this->options['lifetime'],
-      $this->options['path'],
-      $this->options['domain'],
-      $this->options['secure'], 
-      $this->options['httponly']
-    );
 
-    if (!($this->started = session_start())) {
-      throw new \Exception('Unable to start session.');
+    public function has(string $key): bool
+    {
+        return isset($_SESSION[$key]);
     }
-  }
 
 
-  /**
-   * {@inheritDoc}
-   */
-  
-  public function stop()
-  {
-      if (!session_write_close()) {
-          throw new \Exception('Unable to stop session.');
-      }
-
-      $this->started = false;
-
-      return $this;
-  }
+    public function get(string $key, $default = null)
+    {
+        return $_SESSION[$key] ?? $default;
+    }
 
 
-  /**
-   * {@inheritDoc}
-   */
+    public function set(string $key, $value, array $options = [])
+    {
+        $_SESSION[$key] = $value;
+        return $this;
+    }
 
-  public function has(string $key) : bool
-  {
-      return isset($_SESSION[$key]);
-  }
-
-
-  /**
-   * {@inheritDoc}
-   */
-
-  public function get(string $key, $default = null) 
-  {
-      return $_SESSION[$key] ?? $default;
-  }
-
-
-  /**
-   * {@inheritDoc}
-   */
-
-  public function set(string $key, $value, array $options = [])
-  {
-      $_SESSION[$key] = $value;
-      return $this;
-  }
+    /**
+     * {@inheritDoc}
+     *
+     * Not implemented
+     *
+     * @throws \Exeption
+     *    When called
+     */
+    public function with(string $key, $value, array $options = []): never
+    {
+        throw new LogicException('Not implemented');
+    }
 
 
-  /**
-   * {@inheritDoc}
-   * 
-   * Not implemented
-   * 
-   * @throws \Exeption 
-   *    When called
-   */
+    public function push(string $key, $value)
+    {
+        // Not yet set
+        if (! $this->has($key)) {
+            return $this->set($key, [$value]);
+        }
 
-  public function with(string $key, $value, array $options = [])
-  {
-    throw new \LogicException('Not implemented');
-  }
+        // Already set with array value
+        if (is_array($_SESSION[$key])) {
+            $_SESSION[$key][] = $value;
+            return $this;
+        }
 
+        // Set with single value
+        $_SESSION[$key] = [$_SESSION[$key], $value];
 
-  /**
-   * {@inheritDoc}
-   */
-  
-  public function push(string $key, $value)
-  {
-      // Not yet set
-      if (!$this->has($key)) {
-          return $this->set($key, [$value]);
-      }
+        return $this;
+    }
 
-      // Already set with array value
-      if (is_array($_SESSION[$key])) {
-          $_SESSION[$key][] = $value;
-          return $this;
-      }
-
-      // Set with single value
-      $_SESSION[$key] = [$_SESSION[$key], $value];
-
-      return $this;
-  }
+    /**
+     * {@inheritDoc}
+     *
+     * Not implemented
+     *
+     * @throws \Exeption
+     *    When called
+     */
+    public function withAdded(string $key, $value): never
+    {
+        throw new LogicException('Not implemented');
+    }
 
 
-  /**
-   * {@inheritDoc}
-   * 
-   * Not implemented
-   * 
-   * @throws \Exeption 
-   *    When called
-   */
+    public function delete(string $key)
+    {
+        unset($_SESSION[$key]);
+    }
 
-  public function withAdded(string $key, $value)
-  {
-    throw new \LogicException('Not implemented');
-  }
-
-
-  /**
-   * {@inheritDoc}
-   */
-
-  public function delete(string $key)
-  {
-      unset($_SESSION[$key]);
-  }
+    /**
+     * {@inheritDoc}
+     *
+     * Not implemented
+     *
+     * @throws \Exeption
+     *    When called
+     */
+    public function without(string $key): never
+    {
+        throw new LogicException('Not implemented');
+    }
 
 
-  /**
-   * {@inheritDoc}
-   * 
-   * Not implemented
-   * 
-   * @throws \Exeption 
-   *    When called
-   */
+    public function destroy()
+    {
+        unset($_SESSION);
+        $this->stop();
+    }
 
-  public function without(string $key)
-  {
-    throw new \LogicException('Not implemented');
-  }
+    /**
+     * Gets the parameter count of this collection to satisfy the Countable interface.
+     */
+    public function count(): int
+    {
+        return count($_SESSION);
+    }
 
-
-  /**
-   * {@inheritDoc}
-   */
-  
-  public function destroy()
-  {
-      unset($_SESSION);
-      $this->stop();
-  }
+    /**
+     * Creates a new ArrayIterator to satisfy the IteratorAggregate interface.
+     */
+    public function getIterator(): ArrayIterator
+    {
+        return new ArrayIterator($_SESSION);
+    }
 
 
-  /**
-   * Returns string representation of this collection for debug proposes
-   * @return string
-   */
+    public function toArray(): array
+    {
+        return $_SESSION;
+    }
 
-  public function __toString()
-  {
-      $string = '';
+    /**
+     * Returns wether or not a session is currently running
+     */
+    private static function started(): bool
+    {
+        return function_exists('session_status') ? session_status() === \PHP_SESSION_ACTIVE : session_id() !== '';
+    }
 
-      foreach($_SESSION as $key => $parameter) {
-          $string .= sprintf("%s = %s\r\n", $key, $parameter);
-      }
-
-      return $string;
-  }
-
-
-  /**
-   * Gets the parameter count of this collection to satisfy the Countable interface.
-   * @return int
-   */
-  
-  public function count() : int
-  {
-      return count($_SESSION);
-  }
-
-
-  /**
-   * Creates a new ArrayIterator to satisfy the IteratorAggregate interface.
-   * @return ArrayIterator
-   */
-  
-  public function getIterator() : ArrayIterator
-  {
-    return new ArrayIterator($_SESSION);
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-
-  public function toArray() : array
-  {
-    return $_SESSION;
-  }
+    /**
+     * Returns wether or not the session is currently stopped
+     */
+    private static function stoped(): bool
+    {
+        return function_exists('session_status') ? session_status() === \PHP_SESSION_NONE : session_id() === '';
+    }
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of Everest.
  *
@@ -13,148 +15,121 @@ namespace Everest\App;
 
 interface SessionInterface
 {
-	/**
-	 * Starts the session
-	 * @return void
-	 */
-	
-	public function start();
+    public function __toString();
 
+    /**
+     * Starts the session
+     */
+    public function start();
 
-	/**
-	 * Stops the current session
-	 * @return void
-	 */
-	
-  public function stop();
+    /**
+     * Stops the current session
+     */
+    public function stop();
 
+    /**
+     * Destroys the content of the current session and stops it
+     */
+    public function destroy();
 
-  /**
-   * Destroys the content of the current session and stops it
-	 * @return void
-   */
-  
-  public function destroy();
+    /**
+     * Returns whether or not the given key
+     * is contained in this collection
+     *
+     * @param  string  $key
+     *    The key to look for
+     *
+     * @return boolean
+     */
+    public function has(string $key): bool;
 
-	/**
-	 * Returns whether or not the given key
-	 * is contained in this collection
-	 *
-	 * @param  string  $key
-	 *    The key to look for
-	 *
-	 * @return boolean
-	 */
-	
-	public function has(string $key) : bool;
+    /**
+     * Returns the value behind the given key
+     * or null if the key is not set
+     *
+     * @param  string $key
+     *    The key of the value to retrieve
+     *
+     * @return mixed|null
+     */
+    public function get(string $key);
 
+    /**
+     * Sets a value on the given key
+     *
+     * @param string $key
+     *    The key to set
+     * @param mixed $value
+     *    The value to set
+     * @param array $options
+     *    Optional options to be be uses for setting the value
+     *
+     * @return self
+     */
+    public function set(string $key, $value, array $options = []);
 
-	/**
-	 * Returns the value behind the given key
-	 * or null if the key is not set
-	 *
-	 * @param  string $key
-	 *    The key of the value to retrieve
-	 *
-	 * @return mixed|null
-	 */
-	
-	public function get(string $key);
+    /**
+     * Creates a new collection and sets the given key
+     *
+     * @param string $key
+     *    The key to set
+     * @param mixed $value
+     *    The value to set
+     * @param array $options
+     *    Optional options to be be uses for setting the value
+     *
+     * @return static
+     */
+    public function with(string $key, $value, array $options = []);
 
+    /**
+     * Pushs a new value on the given key.
+     *
+     * If the key is not yet set it will be set with an
+     *
+     * @param string $key
+     *    The key to set
+     * @param mixed $value
+     *    The value to set
+     *
+     * @return self
+     */
+    public function push(string $key, $value);
 
-	/**
-	 * Sets a value on the given key
-	 *
-	 * @param string $key
-	 *    The key to set
-	 * @param mixed $value
-	 *    The value to set
-	 * @param array $options
-	 *    Optional options to be be uses for setting the value
-	 *
-	 * @return self
-	 */
-	
-	public function set(string $key, $value, array $options = []);
+    /**
+     * Creates a new collection and pushs a new value on the given key.
+     *
+     * @param string $key
+     *    The key to set
+     * @param mixed $value
+     *    The value to set
+     *
+     * @return static
+     */
+    public function withAdded(string $key, $value);
 
+    /**
+     * Deletes the given key
+     *
+     * @param  string $key
+     *    The key to delete
+     *
+     * @return self
+     */
+    public function delete(string $key);
 
-	/**
-	 * Creates a new collection and sets the given key
-	 *
-	 * @param string $key
-	 *    The key to set
-	 * @param mixed $value
-	 *    The value to set
-	 * @param array $options
-	 *    Optional options to be be uses for setting the value
-	 *
-	 * @return static
-	 */
-	
-	public function with(string $key, $value, array $options = []);
+    /**
+     * Creates a new collection and deletes the given key
+     *
+     * @param  string $key
+     *    The key to delete
+     *
+     * @return static
+     */
+    public function without(string $key);
 
-
-	/**
-	 * Pushs a new value on the given key.
-	 *
-	 * If the key is not yet set it will be set with an
-	 *
-	 * @param string $key
-	 *    The key to set
-	 * @param mixed $value
-	 *    The value to set
-	 *
-	 * @return self
-	 */
-	public function push(string $key, $value);
-
-
-	/**
-	 * Creates a new collection and pushs a new value on the given key.
-	 *
-	 * @param string $key
-	 *    The key to set
-	 * @param mixed $value
-	 *    The value to set
-	 * @param array $options
-	 *    Optional options to be be uses for setting the value
-	 *
-	 * @return static
-	 */
-	
-	public function withAdded(string $key, $value);
-
-
-	/**
-	 * Deletes the given key
-	 *
-	 * @param  string $key
-	 *    The key to delete
-	 *
-	 * @return self
-	 */
-	
-	public function delete(string $key);
-
-
-	/**
-	 * Creates a new collection and deletes the given key
-	 *
-	 * @param  string $key
-	 *    The key to delete
-	 *
-	 * @return static
-	 */
-
-	public function without(string $key);
-
-
-	/**
-	 * Returns the collection in array representation
-	 * @return array
-	 */
-	
-	public function toArray() : array;
-
-	public function __toString();
+    /**
+     * Returns the collection in array representation
+     */
+    public function toArray(): array;
 }

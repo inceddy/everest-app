@@ -1,138 +1,131 @@
 <?php
 
+declare(strict_types=1);
+
 
 /**
  * @author  Philipp Steingrebe <philipp@steingrebe.de>
  */
 
 use Everest\App\Alias;
-use Everest\App\Session;
-use Everest\App\Options;
-use Everest\Http\Requests\ServerRequest;
-use Everest\Http\Responses\Response;
 use Everest\App\Alias\Options as OptionsAlias;
 use Everest\App\Alias\Request as RequestAlias;
 use Everest\App\Alias\Session as SessionAlias;
+use Everest\App\Options;
+use Everest\App\Session;
+use Everest\Http\Requests\ServerRequest;
+use Everest\Http\Responses\Response;
 
-class AliasTest extends \PHPUnit\Framework\TestCase {
+class AliasTest extends \PHPUnit\Framework\TestCase
+{
+    protected function setUp(): void
+    {
+        Alias::reset();
+    }
 
-	public function setUp() : void
-	{
-		Alias::reset();
-	}
+    public function testOptionsAlias()
+    {
+        $app = new Everest\App\App();
+        $app->options([
+            'foo' => 'bar',
+        ]);
 
-	public function testOptionsAlias()
-	{
-		$app = new Everest\App\App;
-		$app->options([
-			'foo' => 'bar'
-		]);
+        $app->boot();
+        $this->assertSame('bar', OptionsAlias::component()('foo'));
+    }
 
-		$app->boot();
-		$this->assertSame('bar', OptionsAlias::component()('foo'));
-	}
+    public function testSwap()
+    {
+        $alias = new class() extends Alias {
+            protected static function getName(): string
+            {
+                return 'foo';
+            }
+        };
 
-	public function testMissingName()
-	{
-		$this->expectException(LogicException::class);
+        $app = new Everest\App\App();
+        $app->value('foo', 'bar');
+        $app->boot();
 
-		$invalidAlias = new class extends Alias {};
-		$invalidAlias::component();
-	}
+        $this->assertSame('bar', $alias::component());
 
-	public function testSwap()
-	{
-		$alias = new class extends Alias {
-			protected static function getName() : string
-			{
-				return 'foo';
-			}
-		};
+        // Swap
+        $alias::swap('baz');
+        $this->assertSame('baz', $alias::component());
+    }
 
-		$app = new Everest\App\App;
-		$app->value('foo', 'bar');
-		$app->boot();
+    public function testInvalidTypeSwap()
+    {
+        $this->expectException(InvalidArgumentException::class);
 
-		$this->assertSame('bar', $alias::component());
+        $alias = new class() extends Alias {
+            protected static function getName(): string
+            {
+                return 'foo';
+            }
+        };
 
-		// Swap
-		$alias::swap('baz');
-		$this->assertSame('baz', $alias::component());
+        $app = new Everest\App\App();
+        $app->value('foo', 'bar');
+        $app->boot();
 
-	}
+        // Swap
+        $alias::swap(1);
+    }
 
-	public function testInvalidTypeSwap()
-	{
-		$this->expectException(InvalidArgumentException::class);
+    public function testInvalidClassSwap()
+    {
+        $this->expectException(InvalidArgumentException::class);
 
-		$alias = new class extends Alias {
-			protected static function getName() : string
-			{
-				return 'foo';
-			}
-		};
+        $alias = new class() extends Alias {
+            protected static function getName(): string
+            {
+                return 'foo';
+            }
+        };
 
-		$app = new Everest\App\App;
-		$app->value('foo', 'bar');
-		$app->boot();
+        $app = new Everest\App\App();
+        $app->value('foo', new stdClass());
+        $app->boot();
 
-		// Swap
-		$alias::swap(1);
-	}
+        // Swap
+        $alias::swap(new ArrayObject());
+    }
 
-	public function testInvalidClassSwap()
-	{
-		$this->expectException(InvalidArgumentException::class);
+    public function testMagicMethodAccess()
+    {
+        $that = $this;
+        $alias = new class() extends Alias {
+            protected static function getName(): string
+            {
+                return 'foo';
+            }
+        };
 
-		$alias = new class extends Alias {
-			protected static function getName() : string
-			{
-				return 'foo';
-			}
-		};
+        $app = new Everest\App\App();
+        $app->value('foo', new class() {
+            public function someMethod()
+            {
+                return 'bar';
+            }
+        });
+        $app->boot();
 
-		$app = new Everest\App\App;
-		$app->value('foo', new stdClass);
-		$app->boot();
+        $this->assertSame('bar', $alias::someMethod());
+    }
 
-		// Swap
-		$alias::swap(new ArrayObject);
-	}
+    public function testAppAliases()
+    {
+        $app = new Everest\App\App();
+        $app->value('ErrorHandler', function () {
+            return $this->createMock(Response::class);
+        });
+        $app->run(
+            $this->createMock(ServerRequest::class)
+        );
 
-	public function testMagicMethodAccess()
-	{
-		$that = $this;
-		$alias = new class extends Alias {
-			protected static function getName() : string
-			{
-				return 'foo';
-			}
-		};
-
-		$app = new Everest\App\App;
-		$app->value('foo', new class {
-			public function someMethod() {
-				return 'bar';
-			}
-		});
-		$app->boot();
-
-		$this->assertSame('bar', $alias::someMethod());
-
-	}
-
-	public function testAppAliases()
-	{
-		$app = new Everest\App\App;
-		$app->value('ErrorHandler', function(){
-			return $this->createMock(Response::class);
-		});
-		$app->run(
-			$this->createMock(ServerRequest::class)
-		);
-
-		$this->assertInstanceOf(Options::class, OptionsAlias::component());
-		$this->assertInstanceOf(ServerRequest::class, RequestAlias::component());
-		$this->assertInstanceOf(Session::class, SessionAlias::component());
-	}
+        $this->assertInstanceOf(Options::class, OptionsAlias::component());
+        $this->assertInstanceOf(ServerRequest::class, RequestAlias::component());
+        $this->assertInstanceOf(Session::class, SessionAlias::component());
+    }
 }

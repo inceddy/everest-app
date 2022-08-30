@@ -1,10 +1,13 @@
 <?php
 
-class SomeService {
+declare(strict_types=1);
 
-	public $injectedValue;
+class SomeService
+{
+    public $injectedValue;
 
-	public function __construct($aValue) {
-		$this->injectedValue = $aValue;
-	}
+    public function __construct($aValue)
+    {
+        $this->injectedValue = $aValue;
+    }
 }

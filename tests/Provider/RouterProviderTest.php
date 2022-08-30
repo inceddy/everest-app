@@ -1,186 +1,187 @@
 <?php
 
+declare(strict_types=1);
+
 
 use Everest\App\Provider\RouterProvider;
-use Everest\Http\Responses\Response;
+use Everest\Container\Container;
+use Everest\Http\Requests\Request;
 use Everest\Http\Requests\RequestInterface;
 use Everest\Http\Requests\ServerRequest;
-use Everest\Http\Requests\Request;
+use Everest\Http\Responses\Response;
 use Everest\Http\Router;
-use Everest\Http\Uri;
 
-use Everest\Container\Container;
+use Everest\Http\Uri;
 
 /**
  * @author  Philipp Steingrebe <philipp@steingrebe.de>
  */
-class RouterProviderTest extends \PHPUnit\Framework\TestCase {
+class RouterProviderTest extends \PHPUnit\Framework\TestCase
+{
+    public function getContainer()
+    {
+        return (new Container())
+            ->factory('Request', [function () {
+            return new ServerRequest(
+                ServerRequest::HTTP_ALL,
+                Uri::from('http://steingrebe.de/prefix/test?some=value#hash')
+            );
+        }])
+            ->value('TestValue', 'test-value')
+            ->provider('Router', new RouterProvider());
+    }
 
-	public function getContainer()
-	{
-		return (new Container)
-		->factory('Request', [function(){
-	    return new ServerRequest(
-	      ServerRequest::HTTP_ALL, 
-	      Uri::from('http://steingrebe.de/prefix/test?some=value#hash')
-	    );
-		}])
-		->value('TestValue', 'test-value')
-		->provider('Router', new RouterProvider);
-	}
+    public function testInstanceSetup()
+    {
+        $container = $this->getContainer();
+        $this->assertInstanceOf(RouterProvider::class, $container['Router']);
+    }
 
-	public function testInstanceSetup()
-	{
-		$container = $this->getContainer();
-		$this->assertInstanceOf(RouterProvider::CLASS, $container['Router']);
-	}
+    public function testRoutingAcceptsDependencies()
+    {
+        $container = $this->getContainer();
+        $called = false;
 
-	public function testRoutingAcceptsDependencies()
-	{
-		$container = $this->getContainer();
-		$called = false;
+        $container->config(['RouterProvider', function ($router) use (&$called) {
+            $router->get('prefix/{id}', ['TestValue',
+                function (RequestInterface $request, $testValue) use (&$called) {
+                    $called = true;
+                    $this->assertEquals([
+                        'id' => 'test',
+                    ], $request->getAttribute('parameter'));
+                    $this->assertEquals('test-value', $testValue);
+                    return 'Not Empty Result';
+                },
+            ]);
+        }]);
 
-		$container->config(['RouterProvider', function($router) use (&$called) {
-			$router->get('prefix/{id}', ['TestValue', 
-				function(RequestInterface $request, $testValue) use (&$called) {
-					$called = true;
-					$this->assertEquals(['id' => 'test'], $request->getAttribute('parameter'));
-					$this->assertEquals('test-value', $testValue);
-					return 'Not Empty Result';
-				}
-			]);
-		}]);
+        $container['Router']->handle($container->Request);
+        $this->assertTrue($called);
+    }
 
+    public function testDefaultHandlerAcceptsDependencies()
+    {
+        $container = $this->getContainer();
 
+        $container->config(['RouterProvider', function ($router) {
+            $router->otherwise(['Request', 'TestValue', function ($request, $testValue) {
+                $this->assertInstanceOf(RequestInterface::class, $request);
+                $this->assertEquals('test-value', $testValue);
 
-		$container['Router']->handle($container->Request);
-		$this->assertTrue($called);
-	}
+                return 'not-empty-result';
+            }]);
+        }]);
 
-	public function testDefaultHandlerAcceptsDependencies()
-	{
-		$container = $this->getContainer();
+        $response = $container['Router']->handle($container->Request);
 
-		$container->config(['RouterProvider', function($router) {
-			$router->otherwise(['Request', 'TestValue', function($request, $testValue){
-				$this->assertInstanceOf(RequestInterface::CLASS, $request);
-				$this->assertEquals('test-value', $testValue);
+        $this->assertInstanceOf(Response::class, $response);
+    }
 
-				return 'not-empty-result';
-			}]);
-		}]);
+    public function testContextAcceptsDependencies()
+    {
+        $container = $this->getContainer();
 
-		$response = $container['Router']->handle($container->Request);
+        $container->config(['RouterProvider', function ($router) {
+            $test = $this;
 
-		$this->assertInstanceOf(Response::CLASS, $response);
-	}
+            $router->context('prefix', ['TestValue', function (Router $router, $testValue) {
+                $this->assertEquals('test-value', $testValue);
+                $router->get('/', function () {
+                    return '';
+                });
+            }]);
+        }]);
 
-	public function testContextAcceptsDependencies()
-	{
-		$container = $this->getContainer();
+        $response = $container['Router']->handle(
+            new ServerRequest(ServerRequest::HTTP_GET, Uri::from('http://a.de/prefix'))
+        );
+    }
 
-		$container->config(['RouterProvider', function($router) {
-			$test = $this;
+    public function testDelegates()
+    {
+        $count = 0;
 
-			$router->context('prefix', ['TestValue', function(Router $router, $testValue){
-				$this->assertEquals('test-value', $testValue);
-				$router->get('/', function(){
-					return '';
-				});
-			}]);
+        $λ = function () use (&$count) {
+            $count++;
+            return '';
+        };
 
-		}]);
+        $app = new Everest\App\App();
+        $app->context('some-context', $λ);
+        $app->request('/', ServerRequest::HTTP_POST | ServerRequest::HTTP_DELETE, $λ);
+        $app->get('/', $λ);
+        $app->post('/', $λ);
+        $app->put('/', $λ);
+        $app->patch('/', $λ);
+        $app->delete('/', $λ);
+        $app->any('/', $λ);
+        $app->otherwise($λ);
 
-		$response = $container['Router']->handle(
-			new ServerRequest(ServerRequest::HTTP_GET, Uri::from('http://a.de/prefix'))
-		);
-	}
+        $app->boot();
+        $app->container()['Router']->handle(
+            new ServerRequest(
+                ServerRequest::HTTP_GET,
+                Uri::from('http://a.de/')
+            )
+        );
 
-	public function testDelegates()
-	{
-		$count = 0;
+        $this->assertEquals(1, $count);
+    }
 
-		$λ = function() use (&$count) {
-			$count++;
-			return '';
-		};
+    public function testMiddleware()
+    {
+        $called = true;
+        $container = $this->getContainer();
 
-		$app = new Everest\App\App;
-		$app->context('some-context', $λ);
-		$app->request('/', ServerRequest::HTTP_POST | ServerRequest::HTTP_DELETE, $λ);
-		$app->get('/', $λ);
-		$app->post('/', $λ);
-		$app->put('/', $λ);
-		$app->patch('/', $λ);
-		$app->delete('/', $λ);
-		$app->any('/', $λ);
-		$app->otherwise($λ);
+        $container->value('B', 'B');
+        $container->value('C', 'C');
+        $container->factory('Middleware', ['B', function ($b) use (&$called) {
+            return function (\Closure $next, Request $request) use ($b, &$called) {
+                $called &= true;
+                return $next($request);
+            };
+        }]);
 
-		$app->boot();
-		$app->container()['Router']->handle(
-			new ServerRequest(
-				ServerRequest::HTTP_GET,
-				Uri::from('http://a.de/')
-			)
-		);
+        $container->config(['RouterProvider', function ($router) use (&$called) {
+            // Classic middleware
+            $router->before(function (\Closure $next, Request $request) use (&$called) {
+                $called &= true;
+                return $next($request);
+            });
 
-		$this->assertEquals(1, $count);
-	}
+            // Predefined middleware
+            $router->before('Middleware');
 
-	public function testMiddleware()
-	{
-		$called = true;
-		$container = $this->getContainer();
+            // Middleware with dependencies
+            $router->before(['C', function (\Closure $next, Request $request, string $c) use (&$called) {
+                $called &= true;
+                return $next($request);
+            }]);
 
-		$container->value('B', 'B');
-		$container->value('C', 'C');
-		$container->factory('Middleware', ['B', function($b) use (&$called) {
-			return function(\Closure $next, Request $request)  use ($b, &$called) {
-				$called &= true;
-				return $next($request);
-			};
-		}]);
-		
-		$container->config(['RouterProvider', function($router) use (&$called) {
-			// Classic middleware
-			$router->before(function(\Closure $next, Request $request) use (&$called){
-				$called &= true;
-				return $next($request);
-			});
+            $router->otherwise(function () use (&$called) {
+                $called &= true;
+                return 'ok';
+            });
+        }]);
 
-			// Predefined middleware
-			$router->before('Middleware');
+        $response = $container['Router']->handle($container->Request);
 
-			// Middleware with dependencies
-			$router->before(['C', function(\Closure $next, Request $request, string $c)  use (&$called) {
-				$called &= true;
-				return $next($request);
-			}]);
+        $this->assertTrue((bool) $called);
+    }
 
-			$router->otherwise(function() use (&$called) {
-				$called &= true;
-				return 'ok';
-			});
-		}]);
-
-		$response = $container['Router']->handle($container->Request);
-
-		$this->assertTrue((bool)$called);
-	}
-
-	public function testMiddlewareRequestModification()
-	{
-		$container = $this->getContainer();
-		$container['Middleware'] = function(\Closure $next, ServerRequest $request) {
-			return $next($request->withUri(Uri::from('http://foo.bar/foo_bar')));
-		};
-		$container->config(['RouterProvider', function($router) use (&$called) {
-			$router->before('Middleware');
-			$router->otherwise(['Request', function($request){
-				$this->assertSame('foo_bar', $request->getUri()->getPath());
-				return 'ok';
-			}]);
-		}]);
-		$container['Router']->handle($container->Request);
-	}
+    public function testMiddlewareRequestModification()
+    {
+        $container = $this->getContainer();
+        $container['Middleware'] = function (\Closure $next, ServerRequest $request) {
+            return $next($request->withUri(Uri::from('http://foo.bar/foo_bar')));
+        };
+        $container->config(['RouterProvider', function ($router) use (&$called) {
+            $router->before('Middleware');
+            $router->otherwise(['Request', function ($request) {
+                $this->assertSame('foo_bar', $request->getUri()->getPath());
+                return 'ok';
+            }]);
+        }]);
+        $container['Router']->handle($container->Request);
+    }
 }

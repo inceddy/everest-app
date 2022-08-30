@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of Everest.
  *
@@ -10,43 +12,40 @@
  */
 
 namespace Everest\App\Provider;
+
 use Everest\App\Options;
 use Everest\App\Session;
 use Everest\Container\FactoryProviderInterface;
 
-class SessionProvider implements FactoryProviderInterface {
+class SessionProvider implements FactoryProviderInterface
+{
+    private const STATE_IDLE = 0;
 
-	private const STATE_IDLE = 0;
-	private const STATE_INITIALIZED = 1;
+    private const STATE_INITIALIZED = 1;
 
-	/**
-	 * Provider state
-	 * @var int
-	 */
-	
-	private $state;
+    /**
+     * Provider state
+     */
+    private int $state;
 
-	public function __construct()
-	{
-		$this->state = self::STATE_IDLE;
-	}
+    public function __construct()
+    {
+        $this->state = self::STATE_IDLE;
+    }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	
-	public function getFactory()
-	{
-		$this->state = self::STATE_INITIALIZED;
 
-		return ['Options', function(Options $options){
-			$session = new Session($options('session.options', []));
+    public function getFactory()
+    {
+        $this->state = self::STATE_INITIALIZED;
 
-			if ($options('session.auto_start', true)) {
-				$session->start();
-			}
+        return ['Options', function (Options $options) {
+            $session = new Session($options('session.options', []));
 
-			return $session;
-		}];
-	}
+            if ($options('session.auto_start', true)) {
+                $session->start();
+            }
+
+            return $session;
+        }];
+    }
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 require_once __DIR__ . '/../fixtures/SomeController.php';
 
 /**
@@ -7,17 +9,18 @@ require_once __DIR__ . '/../fixtures/SomeController.php';
  */
 
 
-class ControllerTest extends \PHPUnit\Framework\TestCase {
-	public function testController()
-	{
-		$app = new Everest\App\App;
-		$app->value('foo', 'foo');
-		$app->value('bar', 'bar');
+class ControllerTest extends \PHPUnit\Framework\TestCase
+{
+    public function testController()
+    {
+        $app = new Everest\App\App();
+        $app->value('foo', 'foo');
+        $app->value('bar', 'bar');
 
-		$app->controller('SomeController', [SomeController::CLASS]);
+        $app->controller('SomeController', [SomeController::class]);
 
-		$controller = $app->container()['SomeControllerController'];
-		$this->assertEquals('foo', $controller->getFoo());
-		$this->assertEquals(['foo', 'bar'], $controller->getFooAndBar());
-	}
+        $controller = $app->container()['SomeControllerController'];
+        $this->assertEquals('foo', $controller->getFoo());
+        $this->assertEquals(['foo', 'bar'], $controller->getFooAndBar());
+    }
 }

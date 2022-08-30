@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of ieUtilities HTTP.
  *
@@ -13,12 +15,9 @@ namespace Everest\App;
 
 interface DelegateProviderInterface
 {
-	/**
-	 * Returns an array of delegates
-	 * [string $methodname => callable $handler]
-	 *
-	 * @return array
-	 */
-	
-	public function getDelegates() : array;
+    /**
+     * Returns an array of delegates
+     * [string $methodname => callable $handler]
+     */
+    public function getDelegates(): array;
 }

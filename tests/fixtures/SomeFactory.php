@@ -1,10 +1,13 @@
 <?php
 
-class SomeFactory {
+declare(strict_types=1);
 
-	public $injectedValue;
+class SomeFactory
+{
+    public $injectedValue;
 
-	public function someMethod($aValue) {
-		return $aValue;
-	}
+    public function someMethod($aValue)
+    {
+        return $aValue;
+    }
 }

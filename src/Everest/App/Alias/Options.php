@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of Everest.
  *
@@ -10,11 +12,13 @@
  */
 
 namespace Everest\App\Alias;
+
 use Everest\App\Alias;
 
-class Options extends Alias {
-	protected static function getName() : string
-	{
-		return 'Options';
-	}
+class Options extends Alias
+{
+    protected static function getName(): string
+    {
+        return 'Options';
+    }
 }

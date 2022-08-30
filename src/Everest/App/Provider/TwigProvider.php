@@ -1,240 +1,199 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Everest\App\Provider;
+
 use Everest\Container\Provider;
 use LogicException;
 
 use Twig_Environment;
-use Twig_SimpleFilter;
 use Twig_Extension;
-
+use Twig_SimpleFilter;
 
 /**
  * A provider for Twig.
  */
 
-class TwigProvider extends Provider {
+class TwigProvider extends Provider
+{
+    /**
+     * Twig template loader instance
+     */
+    private string|\Twig_LoaderInterface|null $loader = null;
 
-	/**
-	 * Twig template loader instance
-	 * @var string|Twig_LoaderInterface
-	 */
-	
-	private $loader;
+    /**
+     * The options cache
+     */
+    private array $options = [];
 
+    /**
+     * The filter cache
+     */
+    private array $filters = [];
 
-	/**
-	 * The options cache
-	 * @var array
-	 */
-	
-	private $options = [];
+    /**
+     * The extension cache
+     */
+    private array $extensions = [];
 
+    /**
+     * Contructor
+     * Invokes a new TwigProvider
+     *
+     * @throws LogicException If the Twig_Environment class is not available
+     *
+     * @return self
+     */
+    public function __construct()
+    {
+        if (! class_exists('Twig_Environment')) {
+            throw new LogicException('The Twig package is not installed/available.');
+        }
 
-	/**
-	 * The filter cache
-	 * @var array
-	 */
-	
-	private $filters = [];
+        $this->factory = ['Injector', $this->factory(...)];
+    }
 
+    /**
+     * The factory method used by the injector
+     *
+     * @param  ieu\Container\Injector $injector  The injector
+     *
+     * @return Twig_Environmen                   The new setup template engine
+     */
+    public function factory($injector)
+    {
+        if (! isset($this->loader)) {
+            throw new LogicException('The Twig loader is not set');
+        }
 
-	/**
-	 * The extension cache
-	 * @var array
-	 */
-	
-	private $extensions = [];
+        if (is_string($this->loader)) {
+            $this->setLoader($injector->get($this->loader));
+        }
 
+        $environment = new Twig_Environment($this->loader, $this->options);
 
-	/**
-	 * Contructor
-	 * Invokes a new TwigProvider
-	 *
-	 * @throws LogicException If the Twig_Environment class is not available
-	 *
-	 * @return self
-	 * 
-	 */
-	
-	public function __construct() 
-	{
-		if (!class_exists('Twig_Environment')) {
-			throw new LogicException("The Twig package is not installed/available.");
-		}
+        // Add filters
+        foreach ($this->filters as $filter) {
+            $environment->addFilter($filter);
+        }
 
-		$this->factory = ['Injector', [$this, 'factory']];
-	}
+        // Add extensions
+        foreach ($this->extensions as $extension) {
+            $environment->addExtension($extension);
+        }
 
-	/**
-	 * The factory method used by the injector
-	 *
-	 * @param  ieu\Container\Injector $injector  The injector
-	 *
-	 * @return Twig_Environmen                   The new setup template engine
-	 * 
-	 */
-	
-	public function factory($injector)
-	{
-		if (!isset($this->loader)) {
-			throw new LogicException("The Twig loader is not set");
-		}
+        return $environment;
+    }
 
-		if (is_string($this->loader)) {
-			$this->setLoader($injector->get($this->loader));
-		}
+    /**
+     * Sets an option in the options cache
+     *
+     * @param string $key    The option name
+     * @param mixed  $value  The option value
+     *
+     * @return self
+     */
+    public function setOption($key, mixed $value)
+    {
+        $this->options[$key] = $value;
+        return $this;
+    }
 
-		$environment = new Twig_Environment($this->loader, $this->options);
+    /**
+     * Sets multiple options in the options cache
+     *
+     * @param array $options  The name -> value option-paris to set
+     *
+     * @return self
+     */
+    public function setOptions(array $options)
+    {
+        foreach ($options as $key => $option) {
+            $this->setOption($key, $option);
+        }
 
-		// Add filters
-		foreach ($this->filters as $filter) {
-			$environment->addFilter($filter);
-		}
+        return $this;
+    }
 
-		// Add extensions
-		foreach ($this->extensions as $extension) {
-			$environment->addExtension($extension);
-		}
+    /**
+     * Gets the options cache
+     *
+     * @return array  The options
+     */
+    public function getOptions()
+    {
+        return $this->options;
+    }
 
-		return $environment;
-	}
+    /**
+     * Sets the loader or the name of the loader-service for
+     * the Twig enviroment.
+     *
+     * @param string|Twig_LoaderInterface $loader  the loader or
+     *                                             the name of the loader-service
+     * @return self
+     */
+    public function setLoader(string|\Twig_LoaderInterface $loader)
+    {
+        $this->loader = $loader;
 
+        return $this;
+    }
 
-	/**
-	 * Sets an option in the options cache
-	 *
-	 * @param string $key    The option name
-	 * @param mixed  $value  The option value
-	 *
-	 * @return self
-	 * 
-	 */
-	
-	public function setOption($key, $value)
-	{
-		$this->options[$key] = $value;
-		return $this;
-	}
+    /**
+     * Gets the loader, or the loader-name.
+     */
+    public function getLoader(): string|\Twig_LoaderInterface
+    {
+        return $this->loader;
+    }
 
+    /**
+     * Adds a new filter to the filter cache
+     *
+     * @param Twig_SimpleFilter $filter  The filter
+     *
+     * @return self
+     */
+    public function addFilter(Twig_SimpleFilter $filter)
+    {
+        $this->filters[] = $filter;
 
-	/**
-	 * Sets multiple options in the options cache
-	 * 
-	 * @param array $options  The name -> value option-paris to set
-	 *
-	 * @return self
-	 * 
-	 */
-	
-	public function setOptions(array $options)
-	{
-		foreach ($options as $key => $option) {
-			$this->setOption($key, $option);
-		}
+        return $this;
+    }
 
-		return $this;
-	}
+    /**
+     * Gets the filter cache
+     *
+     * @return array  The filter cache
+     */
+    public function getFilters()
+    {
+        return $this->filters;
+    }
 
+    /**
+     * Adds a new extension to the extension cache
+     *
+     * @param Twig_Extension $extension  The extension
+     *
+     * @return self
+     */
+    public function addExtension(Twig_Extension $extension)
+    {
+        $this->extensions[] = $extension;
 
-	/**
-	 * Gets the options cache
-	 *
-	 * @return array  The options
-	 * 
-	 */
-	
-	public function getOptions()
-	{
-		return $this->options;
-	}
+        return $this;
+    }
 
-
-	/**
-	 * Sets the loader or the name of the loader-service for
-	 * the Twig enviroment.
-	 *
-	 * @param string|Twig_LoaderInterface $loader  the loader or 
-	 *                                             the name of the loader-service
-	 * @return self
-	 * 
-	 */
-	
-	public function setLoader($loader) 
-	{
-		$this->loader = $loader;
-
-		return $this;
-	}
-
-
-	/**
-	 * Gets the loader, or the loader-name.
-	 *
-	 * @return string|Twig_LoaderInterface
-	 * 
-	 */
-	
-	public function getLoader()
-	{
-		return $this->loader;
-	}
-
-
-	/**
-	 * Adds a new filter to the filter cache
-	 *
-	 * @param Twig_SimpleFilter $filter  The filter
-	 *
-	 * @return self
-	 * 
-	 */
-	
-	public function addFilter(Twig_SimpleFilter $filter)
-	{
-		$this->filters[] = $filter;
-
-		return $this;
-	}
-
-
-	/**
-	 * Gets the filter cache
-	 *
-	 * @return array  The filter cache
-	 */
-	
-	public function getFilters()
-	{
-		return $this->filters;
-	}
-
-
-	/**
-	 * Adds a new extension to the extension cache
-	 *
-	 * @param Twig_Extension $extension  The extension
-	 *
-	 * @return self
-	 * 
-	 */
-	
-	public function addExtension(Twig_Extension $extension)
-	{
-		$this->extensions[] = $extension;
-
-		return $this;
-	}
-
-
-	/**
-	 * Gets the extension cache
-	 *
-	 * @return array  The extension cache
-	 */
-
-	public function getExtensions()
-	{
-		return $this->extensions;
-	}
+    /**
+     * Gets the extension cache
+     *
+     * @return array  The extension cache
+     */
+    public function getExtensions()
+    {
+        return $this->extensions;
+    }
 }
